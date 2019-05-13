@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+
+<h3>You have not confirmed your email</h3>
+<br>
+<p>You cannot subscribe to notifications without first confirming your email address is valid.</p>
+<p>Please check your inbox (and your spam folder) - you should have received an
+  email with a confirmation link.</p>
+  <br>
+<p>Didn't get the email?
+<a href="{{ url_for('auth.resend_confirmation') }}">Resend!</a></p>
+
+{% endblock %}

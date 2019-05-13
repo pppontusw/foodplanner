@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block app_content %}
+<div class="col-md-12">
+  <div class="row">
+    <ul class="list-group">
+      {% for list in lists %}
+      <li class="list-group-item">
+        <a href="{{url_for('main.get_list', list_id=list.id)}}">{{list.name}}</a>
+        <div class="pull-right hidden-xs">
+          <a class="btn btn-primary btn-xs margin-left-5" href="{{url_for('main.get_api_key', list_id=list.id)}}">Get API Key</a>
+          <a class="btn btn-danger btn-xs margin-left-5" href="{{url_for('main.delete_list', list_id=list.id)}}">Delete Sensor</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="row">
+    <a class="btn btn-primary" href="{{url_for('main.new_list')}}">Create New List</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block app_content %}
+<div class="col-md-8">
+  <div class="row">
+    <h3>{{list.name}}</h3>
+      {% block apikey %}
+      {% endblock %}
+    <a class="btn btn-default btn-xs pull-right" href="{{url_for('main.settings', list_id=list.id)}}">Settings</a>
+  </div>
+  <br>
+  <div class="row">
+    <table class="table table-bordered">
+      {% for day in days %}
+      <tr class="active"><th>{{day.day.strftime('%A')}}</th><th>{{day.day}}</th></tr>
+        {% for entry in day.get_entries() %}
+        <tr>
+          <td>{{entry.key}}</td><td><a href="#" id="entry_{{entry.id}}">{{entry.value}}</a></td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<link href="{{url_for('static', filename='bootstrap3-editable/css/bootstrap-editable.css')}}" rel="stylesheet">
+<script src="{{url_for('static', filename='bootstrap3-editable/js/bootstrap-editable.js')}}"></script>
+<script>
+  //turn to inline mode
+  $.fn.editable.defaults.mode = 'inline';
+  {% for day in days %}
+  {% for entry in day.get_entries() %}
+  $('#entry_{{entry.id}}').editable({
+      type: 'text',
+      pk: {{entry.id}},
+      url: '/api/update/{{entry.id}}',
+      send: 'always',
+      title: '{{entry.value}}'
+    });
+  {% endfor %}
+  {% endfor %}
+</script>
+{% endblock %}
