@@ -43,22 +43,7 @@ def deluser(uid):
   if form.validate_on_submit():
     if 'yes' in request.form:
       user = User.query.filter(User.id == uid).first_or_404()
-      lists = user.lists
-      if lists is not None:
-        for list_ in lists:
-          days = list_.days
-          for day in days:
-            entries = day.entries
-            for entry in entries:
-              db.session.delete(entry)
-            db.session.delete(day)
-          for sett in list_.settings:
-            db.session.delete(sett)
-          for share in list_.shares:
-            db.session.delete(share)
-          db.session.delete(list_)
-      db.session.delete(user)
-      db.session.commit()
+      user.delete_user()
       flash('Account deleted successfully!', 'success')
       return redirect(url_for('admin.index'))
     else:

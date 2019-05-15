@@ -1,20 +1,22 @@
 from datetime import date, timedelta
 import unittest
 from app import create_app, db
-from app.models import User, List, Share, Day, Entry
+from app.auth.token import generate_confirmation_token, confirm_token
+from app.models import User, List, Share, Day, Entry, ListSettings
 from config import Config
 
-def push_dummy_user():
-  user = User(email='doodle@doodlydoo.com', username='doodle', is_confirmed=False)
+
+def push_dummy_user(email='doodle@doodlydoo.com', username='doodle'):
+  user = User(email=email, username=username, is_confirmed=False)
   user.set_password('Test1234')
   db.session.add(user)
   db.session.commit()
   return user
 
-def push_dummy_admin():
+def push_dummy_admin(email='doodle-admin@doodlydoo.com', username='doodle-admin'):
   user = User(
-      email='doodle-admin@doodlydoo.com',
-      username='doodle-admin',
+      email=email,
+      username=username,
       is_confirmed=False,
       is_admin=True
   )
@@ -23,13 +25,17 @@ def push_dummy_admin():
   db.session.commit()
   return user
 
+def push_dummy_list(user, name):
+  l = List(owner_id=user.id, name=name)
+  db.session.add(l)
+  db.session.commit()
+  return l
 
 class TestConfig(Config):
   TESTING = True
   SQLALCHEMY_DATABASE_URI = 'sqlite://'
   WTF_CSRF_ENABLED = False
   SECRET_KEY = 'very-secret'
-
 
 
 class UserModelCase(unittest.TestCase):
@@ -44,6 +50,35 @@ class UserModelCase(unittest.TestCase):
     db.drop_all()
     self.app_context.pop()
 
+  def test_repr_user(self):
+    a = push_dummy_user('a', 'a')
+    self.assertEqual(
+        a.__repr__(), '<User a>')
+
+  def test_delete_user(self):
+    a = push_dummy_user('a', 'a')
+    b = push_dummy_user('b', 'b')
+    l = push_dummy_list(a, 'l')
+    d = l.get_days()
+    e = Entry(day_id=d[0].id)
+    ls = ListSettings(list_id=l.id, user_id=a.id)
+    s = Share(list_id=l.id, owner_id=a.id, grantee_id=b.id)
+    db.session.add_all([e, ls, s])
+    db.session.commit()
+    self.assertEqual(User.query.first(), a)
+    self.assertEqual(List.query.first(), l)
+    self.assertEqual(Entry.query.first(), e)
+    self.assertEqual(Day.query.first(), d[0])
+    self.assertEqual(ListSettings.query.first(), ls)
+    self.assertEqual(Share.query.first(), s)
+    a.delete_user()
+    self.assertEqual(User.query.first(), b)
+    self.assertEqual(List.query.first(), None)
+    self.assertEqual(Entry.query.first(), None)
+    self.assertEqual(Day.query.first(), None)
+    self.assertEqual(ListSettings.query.first(), None)
+    self.assertEqual(Share.query.first(), None)
+
   def test_password_hashing(self):
     u = User(email='doodle', username='doodle', is_confirmed=False)
     u.set_password('Hollydooie')
@@ -56,28 +91,31 @@ class UserModelCase(unittest.TestCase):
     db.session.commit()
     self.assertEqual(u.verify_reset_password_token(u.get_reset_password_token()), u)
 
-
   def test_get_lists(self):
     u = User(email='doodle', username='doodle', is_confirmed=True)
     db.session.add(u)
     db.session.commit()
     self.assertEqual(u.get_lists(), [])
-    l = List(owner_id=u.id, name='l')
-    c = List(owner_id=u.id, name='c')
-    db.session.add_all([l, c])
-    db.session.commit()
+    l = push_dummy_list(u, 'l')
+    c = push_dummy_list(u, 'c')
     self.assertEqual(u.get_lists(), [l, c])
     v = User(email='poodle', username='poodle', is_confirmed=True)
     db.session.add(v)
     db.session.commit()
-    x = List(owner_id=v.id, name='x')
-    db.session.add(x)
-    db.session.commit()
+    x = push_dummy_list(v, 'x')
     self.assertEqual(v.get_lists(), [x])
     s = Share(owner_id=v.id, grantee_id=u.id, list_id=x.id)
     db.session.add(s)
     db.session.commit()
     self.assertEqual(u.get_lists(), [l, c, x])
+
+  def test_auth_tokens(self):
+    u = push_dummy_user()
+    a = u.get_reset_password_token()
+    self.assertEqual(u.verify_reset_password_token(a), u)
+    a += 'boo'
+    self.assertFalse(u.verify_reset_password_token(a))
+    self.assertFalse(u.verify_reset_password_token(''))
 
 
 class ListModelCase(unittest.TestCase):
@@ -92,30 +130,61 @@ class ListModelCase(unittest.TestCase):
     db.drop_all()
     self.app_context.pop()
 
+  def test_repr_list(self):
+    a = push_dummy_user('a', 'a')
+    l = push_dummy_list(a, 'l')
+    self.assertEqual(
+        l.__repr__(), '<List {}>'.format(l.name)
+    )
+
+  def test_delete_list(self):
+    a = push_dummy_user('a', 'a')
+    b = push_dummy_user('b', 'b')
+    l = push_dummy_list(a, 'l')
+    d = l.get_days()
+    e = Entry(day_id=d[0].id)
+    ls = ListSettings(list_id=l.id, user_id=a.id)
+    s = Share(list_id=l.id, owner_id=a.id, grantee_id=b.id)
+    db.session.add_all([e, ls, s])
+    db.session.commit()
+    self.assertEqual(List.query.first(), l)
+    self.assertEqual(Entry.query.first(), e)
+    self.assertEqual(Day.query.first(), d[0])
+    self.assertEqual(ListSettings.query.first(), ls)
+    self.assertEqual(Share.query.first(), s)
+    l.delete_list()
+    self.assertEqual(List.query.first(), None)
+    self.assertEqual(Entry.query.first(), None)
+    self.assertEqual(Day.query.first(), None)
+    self.assertEqual(ListSettings.query.first(), None)
+    self.assertEqual(Share.query.first(), None)
+
+  def test_list_get_settings_for_user(self):
+    a = push_dummy_user('a', 'a')
+    b = push_dummy_user('b', 'b')
+    l = push_dummy_list(a, 'l')
+    ls = ListSettings(list_id=l.id, user_id=a.id, start_day_of_week=6, days_to_display=21)
+    db.session.add(ls)
+    db.session.commit()
+    self.assertEqual(l.get_settings_for_user(a), ls)
+    self.assertTrue(l.get_settings_for_user(b).start_day_of_week == -1)
+    self.assertTrue(l.get_settings_for_user(b).days_to_display == 7)
+
   def test_generate_api_key(self):
     u = User(email='doodle', username='doodle', is_confirmed=True)
     db.session.add(u)
     db.session.commit()
-    l = List(owner_id=u.id, name='l')
-    db.session.add(l)
-    db.session.commit()
+    l = push_dummy_list(u, 'l')
     self.assertEqual(l.generate_api_key(), l.apikey)
 
   def test_get_users_with_access(self):
-    u = User(email='doodle', username='doodle', is_confirmed=True)
-    db.session.add(u)
-    db.session.commit()
-    l = List(owner_id=u.id, name='l')
-    c = List(owner_id=u.id, name='c')
-    db.session.add_all([l, c])
-    db.session.commit()
+    u = push_dummy_user()
+    l = push_dummy_list(u, 'l')
     self.assertEqual(l.get_users_with_access(), [u.id])
     v = User(email='poodle', username='poodle', is_confirmed=True)
     db.session.add(v)
     db.session.commit()
-    x = List(owner_id=v.id, name='x')
-    db.session.add(x)
-    db.session.commit()
+    x = push_dummy_list(v, 'x')
     self.assertEqual(x.get_users_with_access(), [v.id])
     s = Share(owner_id=v.id, grantee_id=u.id, list_id=x.id)
     db.session.add(s)
@@ -123,13 +192,9 @@ class ListModelCase(unittest.TestCase):
     self.assertEqual(x.get_users_with_access(), [u.id, v.id])
 
   def test_get_days(self):
-    u = User(email='doodle', username='doodle', is_confirmed=True)
-    db.session.add(u)
-    db.session.commit()
-    l = List(owner_id=u.id, name='l')
-    c = List(owner_id=u.id, name='c')
-    db.session.add_all([l, c])
-    db.session.commit()
+    u = push_dummy_user()
+    l = push_dummy_list(u, 'l')
+    c = push_dummy_list(u, 'c')
     self.assertTrue(len(l.get_days()) == 7)
     now = date.today()
     days = []
@@ -154,14 +219,17 @@ class DayModelCase(unittest.TestCase):
     db.drop_all()
     self.app_context.pop()
 
+  def test_repr_day(self):
+    a = push_dummy_user('a', 'a')
+    l = push_dummy_list(a, 'l')
+    d = l.get_days()[0]
+    self.assertEqual(
+        d.__repr__(), '<Day {} of List l>'.format(d.day))
+
   def test_get_entries(self):
-    u = User(email='doodle', username='doodle', is_confirmed=True)
-    db.session.add(u)
-    db.session.commit()
-    l = List(owner_id=u.id, name='l')
-    c = List(owner_id=u.id, name='c')
-    db.session.add_all([l, c])
-    db.session.commit()
+    u = push_dummy_user()
+    l = push_dummy_list(u, 'l')
+    c = push_dummy_list(u, 'c')
     day_1 = l.get_days()[0]
     self.assertTrue(len(day_1.get_entries()) == 2)
     l.entry_names = 'Lunch,Dinner,Flop'
@@ -178,6 +246,53 @@ class DayModelCase(unittest.TestCase):
     self.assertEqual(day_2.get_entries(), entries)
 
 
+class EntryModelCase(unittest.TestCase):
+  def setUp(self):
+    self.app = create_app(TestConfig)
+    self.app_context = self.app.app_context()
+    self.app_context.push()
+    db.create_all()
+
+  def tearDown(self):
+    db.session.remove()
+    db.drop_all()
+    self.app_context.pop()
+
+  def test_repr_entry(self):
+    a = push_dummy_user('a', 'a')
+    l = push_dummy_list(a, 'l')
+    d = l.get_days()[0]
+    e = Entry(day_id=d.id)
+    db.session.add(e)
+    db.session.commit()
+    self.assertEqual(
+        e.__repr__(), '<Entry 1 of Day {} in List l>'.format(d.day)
+    )
+
+
+class ListSettingsModelCase(unittest.TestCase):
+  def setUp(self):
+    self.app = create_app(TestConfig)
+    self.app_context = self.app.app_context()
+    self.app_context.push()
+    db.create_all()
+
+  def tearDown(self):
+    db.session.remove()
+    db.drop_all()
+    self.app_context.pop()
+
+  def test_repr_listsettings(self):
+    a = push_dummy_user('a', 'a')
+    l = push_dummy_list(a, 'l')
+    ls = ListSettings(list_id=l.id, user_id=a.id)
+    db.session.add(ls)
+    db.session.commit()
+    self.assertEqual(
+        ls.__repr__(), '<ListSettings 1 of List l for User a>'
+    )
+
+
 class ShareModelCase(unittest.TestCase):
   def setUp(self):
     self.app = create_app(TestConfig)
@@ -190,16 +305,23 @@ class ShareModelCase(unittest.TestCase):
     db.drop_all()
     self.app_context.pop()
 
-  def test_get_list(self):
-    u = User(email='doodle', username='doodle', is_confirmed=True)
-    db.session.add(u)
+  def test_repr_share(self):
+    a = push_dummy_user('a', 'a')
+    b = push_dummy_user('b', 'b')
+    l = push_dummy_list(a, 'l')
+    share = Share(list_id=l.id, owner_id=a.id, grantee_id=b.id)
+    db.session.add(share)
     db.session.commit()
+    self.assertEqual(
+        share.__repr__(), '<Share 1 of List l from Owner a to User b>')
+
+
+  def test_get_list(self):
+    u = push_dummy_user()
     v = User(email='doodle2', username='doodle2', is_confirmed=True)
     db.session.add(u)
     db.session.commit()
-    l = List(owner_id=u.id, name='l')
-    db.session.add(l)
-    db.session.commit()
+    l = push_dummy_list(u, 'l')
     s = Share(owner_id=u.id, grantee_id=v.id, list_id=l.id)
     db.session.add(s)
     db.session.commit()
@@ -230,9 +352,7 @@ class MainViewCase(unittest.TestCase):
 
   def test_delete_list(self):
     u = push_dummy_user()
-    l = List(owner_id=u.id, name='TestyList')
-    db.session.add(l)
-    db.session.commit()
+    l = push_dummy_list(u, 'TestyList')
     with self.test_client:
       self.login(u.username)
       rsp = self.test_client.get('/lists')
@@ -252,9 +372,7 @@ class MainViewCase(unittest.TestCase):
 
   def test_lists(self):
     u = push_dummy_user()
-    l = List(owner_id=u.id, name='TestyList')
-    db.session.add(l)
-    db.session.commit()
+    push_dummy_list(u, 'TestyList')
     with self.test_client:
       self.login(u.username)
       rsp = self.test_client.get('/lists')
@@ -265,9 +383,7 @@ class MainViewCase(unittest.TestCase):
 
   def test_list_view(self):
     u = push_dummy_user()
-    l = List(owner_id=u.id, name='TestyList')
-    db.session.add(l)
-    db.session.commit()
+    l = push_dummy_list(u, 'TestyList')
     with self.test_client:
       self.login(u.username)
       rsp = self.test_client.get('/list/' + str(l.id))
@@ -300,9 +416,7 @@ class MainViewCase(unittest.TestCase):
 
   def test_api_update(self):
     u = push_dummy_user()
-    l = List(owner_id=u.id, name='TestyList')
-    db.session.add(l)
-    db.session.commit()
+    l = push_dummy_list(u, 'TestyList')
     day_1 = l.get_days()[0]
     entry_1 = day_1.get_entries()[0]
     with self.test_client:
@@ -376,12 +490,11 @@ class MainViewCase(unittest.TestCase):
     self.assertEqual(rsp.status, '302 FOUND')
     rsp = self.test_client.get('/list/' + str(l.id))
     self.assertEqual(rsp.status, '302 FOUND')
-    rsp = self.test_client.get('/list_added/' + str(l.id))
-    self.assertEqual(rsp.status, '302 FOUND')
     rsp = self.test_client.get('/get_api_key/' + str(l.id))
     self.assertEqual(rsp.status, '302 FOUND')
     rsp = self.test_client.get('/delete_list/' + str(l.id))
     self.assertEqual(rsp.status, '302 FOUND')
+
 
 class AdminViewCase(unittest.TestCase):
   def setUp(self):
@@ -463,7 +576,6 @@ class AdminViewCase(unittest.TestCase):
           'doodle-admin@doodlydoo.com' in html)
       self.assertFalse(
           'doodle@doodlydoo.com' in html)
-
 
 
 class AuthViewCase(unittest.TestCase):
@@ -597,6 +709,13 @@ class AuthViewCase(unittest.TestCase):
       html = rsp.get_data(as_text=True)
       self.assertTrue(
           'You should be redirected automatically to target URL:' in html)
+
+  def test_auth_tokens(self):
+    a = generate_confirmation_token('test@test.com')
+    self.assertEqual(confirm_token(a), 'test@test.com')
+    a += 'boo'
+    self.assertFalse(confirm_token(a))
+    self.assertFalse(confirm_token(''))
 
 
 

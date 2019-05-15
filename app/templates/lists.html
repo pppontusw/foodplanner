@@ -1,19 +1,29 @@
 {% extends 'base.html' %}
 {% block app_content %}
-<div class="col-md-12">
-  <div class="row">
-    <ul class="list-group">
-      {% for list in lists %}
-      <li class="list-group-item">
-        <a href="{{url_for('main.get_list', list_id=list.id)}}">{{list.name}}</a>
-        <div class="pull-right hidden-xs">
-          <a class="btn btn-primary btn-xs margin-left-5" href="{{url_for('main.get_api_key', list_id=list.id)}}">Get API Key</a>
-          <a class="btn btn-danger btn-xs margin-left-5" href="{{url_for('main.delete_list', list_id=list.id)}}">Delete Sensor</a>
-        </div>
-      </li>
-      {% endfor %}
-    </ul>
+{% for list in lists %}
+  <div class="col-md-6">
+    <div class="row">
+      <h1 class="text-center {{ "margin-left-5" if loop.index % 2 == 0 else "margin-right-5" }}"><a href="{{ url_for('main.get_list', list_id=list.id) }}">{{list.name}}</a></h1>
+      <table class="table table-bordered {{ "margin-left-5" if loop.index % 2 == 0 else "margin-right-5" }} ">
+        {% for day in list.get_days(0,2) %}
+        <tr class="active">
+          <th>{{day.day.strftime('%A')}}</th>
+          <th>{{day.day}}</th>
+        </tr>
+        {% for entry in day.get_entries() %}
+        <tr>
+          <td>{{entry.key}}</td>
+          <td>{{entry.value}}</td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+      </table>
+    </div>
   </div>
+{% endfor %}
+<br>
+<br>
+<div class="col-md-12">
   <div class="row">
     <a class="btn btn-primary" href="{{url_for('main.new_list')}}">Create New List</a>
   </div>

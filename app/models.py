@@ -46,7 +46,7 @@ class User(UserMixin, db.Model):
     try:
       uid = jwt.decode(token, current_app.config['SECRET_KEY'],
                        algorithms=['HS256'])['reset_password']
-    except:
+    except jwt.PyJWTError:  # any exception in this method should result in failure
       return
     return User.query.get(uid)
 
@@ -54,6 +54,24 @@ class User(UserMixin, db.Model):
     lists = self.lists
     lists += [i.get_list() for i in self.shared_with if i.owner_id != self.id]
     return lists
+
+  def delete_user(self):
+    lists = self.lists
+    if lists is not None:
+      for list_ in lists:
+        days = list_.days
+        for day in days:
+          entries = day.entries
+          for entry in entries:
+            db.session.delete(entry)
+          db.session.delete(day)
+        for sett in list_.settings:
+          db.session.delete(sett)
+        for share in list_.shares:
+          db.session.delete(share)
+        db.session.delete(list_)
+    db.session.delete(self)
+    db.session.commit()
 
 
 class List(db.Model):
@@ -96,6 +114,32 @@ class List(db.Model):
       days.append(day)
     return days
 
+  def get_settings_for_user(self, user):
+    settings = ListSettings.query.filter_by(list_id=self.id, user_id=user.id).first()
+    if not settings:
+      settings = ListSettings(
+          list_id=self.id,
+          user_id=user.id,
+          start_day_of_week=-1
+      )
+      db.session.add(settings)
+      db.session.commit()
+    return settings
+
+  def delete_list(self):
+    days = self.days
+    for day in days:
+      entries = day.entries
+      for entry in entries:
+        db.session.delete(entry)
+      db.session.delete(day)
+    for sett in self.settings:
+      db.session.delete(sett)
+    for share in self.shares:
+      db.session.delete(share)
+    db.session.delete(self)
+    db.session.commit()
+
 
 class Day(db.Model):
   __tablename__ = 'day'
@@ -123,9 +167,16 @@ class ListSettings(db.Model):
   __tablename__ = 'listsettings'
   id = db.Column(db.Integer, primary_key=True)
   list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
+  list_ = db.relationship("List")
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-  start_day_of_week = db.Column(db.Integer, default=None)
+  user = db.relationship("User")
+  start_day_of_week = db.Column(db.Integer, default=-1)
   days_to_display = db.Column(db.Integer, default=7)
+
+  def __repr__(self):
+    return "<ListSettings {} of List {} for User {}>".format(
+        self.id, self.list_.name, self.user.username
+    )
 
 
 class Entry(db.Model):
@@ -137,7 +188,7 @@ class Entry(db.Model):
   value = db.Column(db.String(256))
 
   def __repr__(self):
-    return "<Entry {} of List {}>".format(self.id, self.day.day)
+    return "<Entry {} of Day {} in List {}>".format(self.id, self.day.day, self.day.list_.name)
 
 
 class Share(db.Model):
@@ -146,6 +197,14 @@ class Share(db.Model):
   owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   grantee_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
+  list_ = db.relationship("List")
+  owner = db.relationship("User", foreign_keys=[owner_id])
+  grantee = db.relationship("User", foreign_keys=[grantee_id])
 
   def get_list(self):
     return List.query.filter_by(id=self.list_id).first()
+
+  def __repr__(self):
+    return "<Share {} of List {} from Owner {} to User {}>".format(
+        self.id, self.list_.name, self.owner.username, self.grantee.username
+    )

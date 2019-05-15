@@ -1,0 +1,15 @@
+{% extends 'settings.html' %}
+{% block settings %}
+<div class="row">
+  <h3>List Daily Meals</h3>
+</div>
+{% block scripts %}
+{{super()}}
+<script>
+  $('#DailyMeals').addClass('active')
+  $('#Shares').removeClass('active')
+  $('#Foods').removeClass('active')
+  $('#ListSettings').removeClass('active')
+</script>
+{% endblock %}
+{% endblock %}

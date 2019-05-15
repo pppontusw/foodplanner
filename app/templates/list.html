@@ -5,7 +5,7 @@
     <h3>{{list.name}}</h3>
       {% block apikey %}
       {% endblock %}
-    <a class="btn btn-default btn-xs pull-right" href="{{url_for('main.settings', list_id=list.id)}}">Settings</a>
+    <a class="btn btn-default pull-right" href="{{url_for('main.settings', list_id=list.id)}}">Settings</a>
   </div>
   <br>
   <div class="row">
@@ -28,7 +28,7 @@
 <script src="{{url_for('static', filename='bootstrap3-editable/js/bootstrap-editable.js')}}"></script>
 <script>
   //turn to inline mode
-  $.fn.editable.defaults.mode = 'inline';
+  //$.fn.editable.defaults.mode = 'inline';
   {% for day in days %}
   {% for entry in day.get_entries() %}
   $('#entry_{{entry.id}}').editable({

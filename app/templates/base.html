@@ -32,7 +32,6 @@ Foodlist
               <a href="{{ url_for('main.get_lists') }}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                 aria-expanded="false">Lists <span class="caret"></span></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ url_for('main.get_lists') }}">See All Lists</a></li>
                 {% for list in current_user.get_lists() %}
                 <li><a href="{{ url_for('main.get_list', list_id=list.id) }}">{{list.name}}</a></li>
                 {% endfor %}
@@ -58,7 +57,7 @@ Foodlist
 {% endblock %}
 
 {% block content %}
-<div class="container ">
+<div class="container">
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
 {% for category, message in messages %}
