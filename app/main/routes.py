@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 from app.models import List, Entry, User, Share
 from app import db
 from app.main import bp
-from app.main.decorators import check_list_access, check_entry_access
+from app.main.decorators import check_list_access, check_entry_access, check_list_owner
 from app.main.forms import NewListForm, ConfirmDeleteForm, ListSettingsForm, ShareForm
 
 def get_previous_of_weekday(d):
@@ -24,8 +24,7 @@ def index():
 
 @bp.route('/delete_list/<list_id>', methods=['GET', 'POST'])
 @login_required
-@check_list_access
-# TODO @check_list_owner
+@check_list_owner
 def delete_list(list_id):
   list_ = List.query.filter_by(id=list_id).first_or_404()
   form = ConfirmDeleteForm()
@@ -57,12 +56,11 @@ def get_lists():
 @login_required
 @check_list_access
 def get_list(list_id):
-  # TODO TESTS (for settings)
   list_ = List.query.filter_by(id=list_id).first_or_404()
   sett = list_.get_settings_for_user(current_user)
   d = get_previous_of_weekday(sett.start_day_of_week)
   days = list_.get_days(
-      d, 
+      d,
       d + sett.days_to_display
   )
   return render_template('list.html', list=list_, days=days)
@@ -85,7 +83,6 @@ def new_list():
 @login_required
 @check_list_access
 def settings(list_id):
-  # TODO TESTS
   return redirect(url_for('main.list_settings', list_id=list_id))
 
 
@@ -93,7 +90,6 @@ def settings(list_id):
 @login_required
 @check_list_access
 def list_settings(list_id):
-  # TODO TESTS
   form = ListSettingsForm()
   list_ = List.query.filter_by(id=list_id).first_or_404()
   curr_settings = list_.get_settings_for_user(current_user)
@@ -116,7 +112,7 @@ def list_settings(list_id):
 @login_required
 @check_list_access
 def list_foods(list_id):
-  # TODO TESTS
+  # TODO Create a list of meals that can be autocompleted
   list_ = List.query.filter_by(id=list_id).first_or_404()
   return render_template('list_foods.html', list=list_)
 
@@ -125,7 +121,7 @@ def list_foods(list_id):
 @login_required
 @check_list_access
 def list_daily_meals(list_id):
-  # TODO TESTS
+  # TODO List and change the different meals of the day i.e. lunch, dinner, breakfast etc.
   list_ = List.query.filter_by(id=list_id).first_or_404()
   return render_template('list_daily_meals.html', list=list_)
 
@@ -144,13 +140,12 @@ def drop_share(list_id, share_id):
 @login_required
 @check_list_access
 def list_shares(list_id):
-  # TODO TESTS
   form = ShareForm()
   list_ = List.query.filter_by(id=list_id).first_or_404()
   l_shares = list_.shares
   if form.validate_on_submit():
     u = User.query.filter(
-        (User.username == form.target.data) | (User.email == form.target.data)
+        (User.username == form.target.data.lower()) | (User.email == form.target.data.lower())
     ).first()
     s = Share.query.filter_by(
         list_id=list_.id, grantee_id=u.id
@@ -160,11 +155,11 @@ def list_shares(list_id):
       db.session.add(s)
       db.session.commit()
     return redirect(url_for('main.list_shares', list_id=list_.id))
-  return render_template('list_shares.html', 
+  return render_template('list_shares.html',
                          list=list_,
                          form=form,
                          list_shares=l_shares
-  )
+                        )
 
 
 

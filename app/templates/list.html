@@ -36,7 +36,7 @@
       pk: {{entry.id}},
       url: '/api/update/{{entry.id}}',
       send: 'always',
-      title: '{{entry.value}}'
+      title: '{{day.day.strftime("%A")}} {{entry.key}}'
     });
   {% endfor %}
   {% endfor %}

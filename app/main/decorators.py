@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import redirect, url_for, request, flash
+from flask import redirect, url_for, flash
 from flask_login import current_user
 from app.models import List, Entry
 
@@ -23,6 +23,17 @@ def check_list_access(func):
     return func(*args, **kwargs)
   return decorated_function
 
+
+def check_list_owner(func):
+  @wraps(func)
+  def decorated_function(*args, **kwargs):
+    list_id = kwargs['list_id']
+    list_ = List.query.filter_by(id=list_id).first()
+    if current_user.id != list_.owner.id:
+      flash('Only the list owner can delete the list!', 'danger')
+      return redirect(url_for('auth.login'))
+    return func(*args, **kwargs)
+  return decorated_function
 
 def check_entry_access(func):
   @wraps(func)

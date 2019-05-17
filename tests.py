@@ -471,6 +471,46 @@ class MainViewCase(unittest.TestCase):
       self.assertEqual(rsp.status, '200 OK')
 
 
+  def test_list_settings(self):
+    u = push_dummy_user()
+    l = push_dummy_list(u, 'TestyList')
+    with self.test_client:
+      self.login(u.username)
+      rsp = self.test_client.get('/list/' + str(l.id))
+      html = rsp.get_data(as_text=True)
+      self.assertTrue('#entry_30' not in html)
+      tomorrow = date.today() + timedelta(days=1)
+      rsp = self.test_client.post('/list_settings/' + str(l.id), data=dict(
+          name="TestyList",
+          daysToDisplay="15",
+          startDayOfTheWeek=str(tomorrow.weekday())
+      ))
+      self.assertEqual(rsp.status, '200 OK')
+      rsp = self.test_client.get('/list/' + str(l.id))
+      html = rsp.get_data(as_text=True)
+      self.assertTrue(html.count(tomorrow.strftime('%A')), 9)
+      self.assertTrue('#entry_30' in html)
+
+  def test_list_shares(self):
+    u = push_dummy_user()
+    v = push_dummy_user(email='User2800@user.com', username='user2800')
+    l = push_dummy_list(u, 'TestyList')
+    with self.test_client:
+      self.login(u.username)
+      rsp = self.test_client.get('/list_shares/' + str(l.id))
+      html = rsp.get_data(as_text=True)
+      self.assertTrue(v.username not in html)
+      rsp = self.test_client.post('/list_shares/' + str(l.id), data=dict(
+          target=v.username
+      ))
+      html = rsp.get_data(as_text=True)
+      print(html)
+      self.assertEqual(rsp.status, '302 FOUND')
+      rsp = self.test_client.get('/list_shares/' + str(l.id))
+      html = rsp.get_data(as_text=True)
+      self.assertTrue(v.username in html)
+
+
   def test_unauthenticated(self):
     u = push_dummy_user()
     l = List(owner_id=u.id, name='TestyList')
