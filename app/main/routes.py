@@ -1,10 +1,17 @@
+from datetime import date
 from flask import render_template, redirect, url_for, jsonify, request, flash
 from flask_login import current_user, login_required
-from app.models import List, Entry
+from app.models import List, Entry, User, Share
 from app import db
 from app.main import bp
 from app.main.decorators import check_list_access, check_entry_access
-from app.main.forms import NewListForm, ConfirmDeleteForm, ListSettingsForm
+from app.main.forms import NewListForm, ConfirmDeleteForm, ListSettingsForm, ShareForm
+
+def get_previous_of_weekday(d):
+  weekday = d - date.today().weekday()
+  if weekday > 0:
+    weekday -= 7
+  return weekday
 
 @bp.route('/index')
 @bp.route('/')
@@ -43,16 +50,21 @@ def get_api_key(list_id):
 @bp.route('/lists')
 @login_required
 def get_lists():
-  lists = List.query.filter_by(owner_id=current_user.id).all()
-  return render_template('lists.html', lists=lists)
+  return render_template('lists.html')
 
 
 @bp.route('/list/<list_id>')
 @login_required
 @check_list_access
 def get_list(list_id):
+  # TODO TESTS (for settings)
   list_ = List.query.filter_by(id=list_id).first_or_404()
-  days = list_.get_days()
+  sett = list_.get_settings_for_user(current_user)
+  d = get_previous_of_weekday(sett.start_day_of_week)
+  days = list_.get_days(
+      d, 
+      d + sett.days_to_display
+  )
   return render_template('list.html', list=list_, days=days)
 
 
@@ -118,13 +130,41 @@ def list_daily_meals(list_id):
   return render_template('list_daily_meals.html', list=list_)
 
 
-@bp.route('/list_shares/<list_id>')
+@bp.route('/drop_share/<list_id>/<share_id>')
+@login_required
+@check_list_access
+def drop_share(list_id, share_id):
+  s = Share.query.filter_by(id=share_id, list_id=list_id).first()
+  db.session.delete(s)
+  db.session.commit()
+  return redirect(url_for('main.list_shares', list_id=list_id))
+
+
+@bp.route('/list_shares/<list_id>', methods=['GET', 'POST'])
 @login_required
 @check_list_access
 def list_shares(list_id):
   # TODO TESTS
+  form = ShareForm()
   list_ = List.query.filter_by(id=list_id).first_or_404()
-  return render_template('list_shares.html', list=list_)
+  l_shares = list_.shares
+  if form.validate_on_submit():
+    u = User.query.filter(
+        (User.username == form.target.data) | (User.email == form.target.data)
+    ).first()
+    s = Share.query.filter_by(
+        list_id=list_.id, grantee_id=u.id
+    ).first()
+    if not s:
+      s = Share(list_id=list_.id, owner_id=list_.owner_id, grantee_id=u.id)
+      db.session.add(s)
+      db.session.commit()
+    return redirect(url_for('main.list_shares', list_id=list_.id))
+  return render_template('list_shares.html', 
+                         list=list_,
+                         form=form,
+                         list_shares=l_shares
+  )
 
 
 

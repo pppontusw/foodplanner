@@ -5,7 +5,7 @@
     <h3>{{list.name}}</h3>
       {% block apikey %}
       {% endblock %}
-    <a class="btn btn-default pull-right" href="{{url_for('main.settings', list_id=list.id)}}">Settings</a>
+    <a class="btn btn-default pull-right" href="{{url_for('main.settings', list_id=list.id)}}"><span class="glyphicon glyphicon-cog"></span> Settings</a>
   </div>
   <br>
   <div class="row">

@@ -1,8 +1,27 @@
 {% extends 'settings.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
 {% block settings %}
 <div class="row">
-  <h3>List Shares</h3>
+  <ul class="list-group">
+      <li class="list-group-item">{{list.owner.username}} <span class="label label-primary margin-left-5">Owner</span></li>
+    {% for share in list_shares %}
+      <li class="list-group-item">{{share.grantee.username}} <a href="{{url_for('main.drop_share', share_id=share.id, list_id=list.id)}}" class="glyphicon glyphicon-remove text-danger pull-right"></a></li>
+    {% endfor %}
+  </ul>
 </div>
+<div class="row">
+  <h4>Add share</h4>
+  {{ wtf.quick_form(form, form_type="inline", button_map={'submit': 'primary'}) }}
+  <br>
+  {% for error in form.errors.target %}
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+  {% endfor %}
+</div>
+<hr>
+<div class="row">
+  <h3>no api key</h3>
+</div>
+{% endblock %}
 {% block scripts %}
 {{super()}}
 <script>
@@ -11,5 +30,4 @@
   $('#Foods').removeClass('active')
   $('#ListSettings').removeClass('active')
 </script>
-{% endblock %}
 {% endblock %}

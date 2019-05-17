@@ -4,6 +4,7 @@
 <div class="row">
   {{ wtf.quick_form(form, button_map={'submit': 'primary'}) }}
 </div>
+{% endblock %}
 {% block scripts %}
 {{super()}}
 <script>
@@ -12,5 +13,4 @@
   $('#Shares').removeClass('active')
   $('#Foods').removeClass('active')
 </script>
-{% endblock %}
 {% endblock %}

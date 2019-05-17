@@ -9,4 +9,4 @@ while true; do
    sleep 5
 done
 export FLASK_DEBUG=True
-exec flask run
+exec flask run --host=0.0.0.0

@@ -22,10 +22,9 @@ class User(UserMixin, db.Model):
   password = db.Column(db.String(250))
   is_confirmed = db.Column(db.Boolean)
   is_admin = db.Column(db.Boolean, default=False)
-  default_list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
   lists = db.relationship("List", foreign_keys='List.owner_id')
   own_shares = db.relationship("Share", foreign_keys='Share.owner_id')
-  shared_with = db.relationship("Share", foreign_keys='Share.grantee_id')
+  shared_with = db.relationship("Share", primaryjoin="User.id == Share.grantee_id")
 
   def __repr__(self):
     return "<User {}>".format(self.email)
@@ -52,7 +51,7 @@ class User(UserMixin, db.Model):
 
   def get_lists(self):
     lists = self.lists
-    lists += [i.get_list() for i in self.shared_with if i.owner_id != self.id]
+    lists += [i.list_ for i in self.shared_with if i.list_ not in lists]
     return lists
 
   def delete_user(self):
@@ -84,6 +83,7 @@ class List(db.Model):
   entry_names = db.Column(db.String(250), default='Lunch,Dinner')
 
   owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+  owner = db.relationship("User", foreign_keys=[owner_id])
 
   days = db.relationship("Day")
   shares = db.relationship("Share")
@@ -97,7 +97,7 @@ class List(db.Model):
     return self.apikey
 
   def get_users_with_access(self):
-    accessers = [i.id for i in self.shares]
+    accessers = [i.grantee.id for i in self.shares]
     accessers.append(self.owner_id)
     return accessers
 
@@ -145,7 +145,7 @@ class Day(db.Model):
   __tablename__ = 'day'
   id = db.Column(db.Integer, primary_key=True)
   list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
-  list_ = db.relationship("List", backref="List")
+  list_ = db.relationship("List")
   day = db.Column(db.Date)
   entries = db.relationship("Entry")
 
@@ -183,7 +183,7 @@ class Entry(db.Model):
   __tablename__ = 'entry'
   id = db.Column(db.Integer, primary_key=True)
   day_id = db.Column(db.Integer, db.ForeignKey('day.id'))
-  day = db.relationship("Day", backref="Day")
+  day = db.relationship("Day")
   key = db.Column(db.String(256))
   value = db.Column(db.String(256))
 

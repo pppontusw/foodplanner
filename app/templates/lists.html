@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block app_content %}
-{% for list in lists %}
+{% for list in current_user.get_lists() %}
   <div class="col-md-6">
     <div class="row">
       <h1 class="text-center {{ "margin-left-5" if loop.index % 2 == 0 else "margin-right-5" }}"><a href="{{ url_for('main.get_list', list_id=list.id) }}">{{list.name}}</a></h1>

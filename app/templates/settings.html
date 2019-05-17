@@ -4,9 +4,11 @@
   <div class="row">
     <a class="btn btn-default pull-right" href="{{url_for('main.get_list', list_id=list.id)}}">Back</a>
     <ul class="nav nav-tabs">
-      <li role="presentation" id="ListSettings"><a href="{{url_for('main.list_settings', list_id=list.id)}}">List Settings</a></li>
-      <li role="presentation" id="Foods"><a href="{{url_for('main.list_foods', list_id=list.id)}}">Foods</a></li>
-      <li role="presentation" id="DailyMeals"><a href="{{url_for('main.list_daily_meals', list_id=list.id)}}">Daily Meals</a></li>
+      <li role="presentation" id="ListSettings"><a href="{{url_for('main.list_settings', list_id=list.id)}}">View</a></li>
+      <li role="presentation" id="Foods" class="disabled"><a>Foods</a></li>
+      <li role="presentation" id="DailyMeals" class="disabled"><a>Daily Meals</a></li>
+      <!---<li role="presentation" id="Foods"><a href="{{url_for('main.list_foods', list_id=list.id)}}">Foods</a></li>
+      <li role="presentation" id="DailyMeals"><a href="{{url_for('main.list_daily_meals', list_id=list.id)}}">Daily Meals</a></li>-->
       <li role="presentation" id="Shares"><a href="{{url_for('main.list_shares', list_id=list.id)}}">Shares</a></li>
     </ul>
   </div>
