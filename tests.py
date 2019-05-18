@@ -433,8 +433,6 @@ class MainViewCase(unittest.TestCase):
       rsp = self.test_client.post('/api/update/' + str(entry_1.id), data=dict(
           value='Argogaa'
       ))
-      html = rsp.get_data(as_text=True)
-      print(html)
       self.assertEqual(rsp.status, '200 OK')
       rsp = self.test_client.get('/list/' + str(l.id))
       html = rsp.get_data(as_text=True)
