@@ -11,5 +11,5 @@ __pycache__
 secrets.sh
 logs/
 .env*
-alembic*.ini
+alembic-*.ini
 docker-compose.yml
