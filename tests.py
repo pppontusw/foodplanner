@@ -34,6 +34,8 @@ def push_dummy_list(user, name, level="owner"):
   db.session.commit()
   return l
 
+
+
 class TestConfig(Config):
   TESTING = True
   SQLALCHEMY_DATABASE_URI = 'sqlite://'
@@ -441,7 +443,7 @@ class MainViewCase(unittest.TestCase):
   def test_shared_lists_access(self):
     u = push_dummy_user()
     l = push_dummy_list(u, 'Arbitration')
-    c = push_dummy_list(u,  name='Cherrypie')
+    c = push_dummy_list(u, name='Cherrypie')
     db.session.add_all([l, c])
     db.session.commit()
     with self.test_client:
@@ -525,8 +527,7 @@ class MainViewCase(unittest.TestCase):
       rsp = self.test_client.post('/list_settings/' + str(l.id), data=dict(
           name="TestyList",
           daysToDisplay="15",
-          startDayOfTheWeek="2")
-      )
+          startDayOfTheWeek="2"))
       rsp = self.test_client.get('/list/' + str(l.id))
       html = rsp.get_data(as_text=True)
       self.assertTrue(l.name in html)
