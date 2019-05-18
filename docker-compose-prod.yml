@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  frontend:
+    restart: always
+    image: foodlist:latest
+    ports:
+      - "9100:5000"

@@ -13,7 +13,9 @@ RUN venv/bin/pip install psycopg2-binary
 
 COPY alembic alembic
 COPY app app
-COPY foodlist.py config.py boot.sh alembic.ini .env ./
+COPY .env-prod .env
+COPY alembic-prod.ini alembic.ini
+COPY foodlist.py config.py boot.sh ./
 RUN chmod +x boot.sh
 
 ENV FLASK_APP foodlist.py
