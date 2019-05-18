@@ -22,9 +22,8 @@ class User(UserMixin, db.Model):
   password = db.Column(db.String(250))
   is_confirmed = db.Column(db.Boolean)
   is_admin = db.Column(db.Boolean, default=False)
-  lists = db.relationship("List", foreign_keys='List.owner_id')
-  own_shares = db.relationship("Share", foreign_keys='Share.owner_id')
-  shared_with = db.relationship("Share", primaryjoin="User.id == Share.grantee_id")
+
+  lists = db.relationship("ListPermission", back_populates='user')
 
   def __repr__(self):
     return "<User {}>".format(self.email)
@@ -50,14 +49,12 @@ class User(UserMixin, db.Model):
     return User.query.get(uid)
 
   def get_lists(self):
-    lists = self.lists
-    lists += [i.list_ for i in self.shared_with if i.list_ not in lists]
-    return lists
+    return [i.list_ for i in self.lists]
 
   def delete_user(self):
-    lists = self.lists
-    if lists is not None:
-      for list_ in lists:
+    lists = self.get_lists()
+    for list_ in lists:
+      if list_ is not None:
         days = list_.days
         for day in days:
           entries = day.entries
@@ -66,8 +63,8 @@ class User(UserMixin, db.Model):
           db.session.delete(day)
         for sett in list_.settings:
           db.session.delete(sett)
-        for share in list_.shares:
-          db.session.delete(share)
+        for lpm in list_.users:
+          db.session.delete(lpm)
         db.session.delete(list_)
     db.session.delete(self)
     db.session.commit()
@@ -82,11 +79,8 @@ class List(db.Model):
   entries_per_day = db.Column(db.Integer)
   entry_names = db.Column(db.String(250), default='Lunch,Dinner')
 
-  owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-  owner = db.relationship("User", foreign_keys=[owner_id])
-
+  users = db.relationship("ListPermission", back_populates='list_')
   days = db.relationship("Day")
-  shares = db.relationship("Share")
   settings = db.relationship("ListSettings")
 
   def __repr__(self):
@@ -97,9 +91,15 @@ class List(db.Model):
     return self.apikey
 
   def get_users_with_access(self):
-    accessers = [i.grantee.id for i in self.shares]
-    accessers.append(self.owner_id)
-    return accessers
+    return [i.user for i in self.users]
+
+  def get_non_owners(self):
+    print("nonowner", [i.user for i in self.users if i.permission_level == 'rw'])
+    return [i.user for i in self.users if i.permission_level == 'rw']
+
+  def get_owners(self):
+    print("owner", [i.user for i in self.users if i.permission_level == 'owner'])
+    return [i.user for i in self.users if i.permission_level == 'owner']
 
   def get_days(self, start=0, end=7):
     now = date.today()
@@ -135,18 +135,36 @@ class List(db.Model):
       db.session.delete(day)
     for sett in self.settings:
       db.session.delete(sett)
-    for share in self.shares:
-      db.session.delete(share)
+    for userperm in self.users:
+      db.session.delete(userperm)
     db.session.delete(self)
     db.session.commit()
+
+
+class ListSettings(db.Model):
+  __tablename__ = 'listsettings'
+  id = db.Column(db.Integer, primary_key=True)
+  list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
+  user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+  start_day_of_week = db.Column(db.Integer, default=-1)
+  days_to_display = db.Column(db.Integer, default=7)
+
+  user = db.relationship("User")
+  list_ = db.relationship("List")
+
+  def __repr__(self):
+    return "<ListSettings {} of List {} for User {}>".format(
+        self.id, self.list_.name, self.user.username
+    )
 
 
 class Day(db.Model):
   __tablename__ = 'day'
   id = db.Column(db.Integer, primary_key=True)
   list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
-  list_ = db.relationship("List")
   day = db.Column(db.Date)
+
+  list_ = db.relationship("List", back_populates='days')
   entries = db.relationship("Entry")
 
   def __repr__(self):
@@ -163,48 +181,30 @@ class Day(db.Model):
     return self.entries
 
 
-class ListSettings(db.Model):
-  __tablename__ = 'listsettings'
-  id = db.Column(db.Integer, primary_key=True)
-  list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
-  list_ = db.relationship("List")
-  user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-  user = db.relationship("User")
-  start_day_of_week = db.Column(db.Integer, default=-1)
-  days_to_display = db.Column(db.Integer, default=7)
-
-  def __repr__(self):
-    return "<ListSettings {} of List {} for User {}>".format(
-        self.id, self.list_.name, self.user.username
-    )
-
-
 class Entry(db.Model):
   __tablename__ = 'entry'
   id = db.Column(db.Integer, primary_key=True)
   day_id = db.Column(db.Integer, db.ForeignKey('day.id'))
-  day = db.relationship("Day")
   key = db.Column(db.String(256))
   value = db.Column(db.String(256))
+
+  day = db.relationship("Day", back_populates='entries')
 
   def __repr__(self):
     return "<Entry {} of Day {} in List {}>".format(self.id, self.day.day, self.day.list_.name)
 
 
-class Share(db.Model):
-  __tablename__ = 'shares'
+class ListPermission(db.Model):
+  __tablename__ = 'listpermission'
   id = db.Column(db.Integer, primary_key=True)
-  owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-  grantee_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+  user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
-  list_ = db.relationship("List")
-  owner = db.relationship("User", foreign_keys=[owner_id])
-  grantee = db.relationship("User", foreign_keys=[grantee_id])
+  permission_level = db.Column(db.String(256))
 
-  def get_list(self):
-    return List.query.filter_by(id=self.list_id).first()
+  list_ = db.relationship("List", back_populates='users')
+  user = db.relationship("User", back_populates='lists')
 
   def __repr__(self):
-    return "<Share {} of List {} from Owner {} to User {}>".format(
-        self.id, self.list_.name, self.owner.username, self.grantee.username
+    return "<ListPermission {} of List {} to User {} at level {}>".format(
+        self.id, self.list_.name, self.user.username, self.permission_level
     )

@@ -2,7 +2,7 @@ from datetime import date, timedelta
 import unittest
 from app import create_app, db
 from app.auth.token import generate_confirmation_token, confirm_token
-from app.models import User, List, Share, Day, Entry, ListSettings
+from app.models import User, List, ListPermission, Day, Entry, ListSettings
 from config import Config
 
 
@@ -25,9 +25,12 @@ def push_dummy_admin(email='doodle-admin@doodlydoo.com', username='doodle-admin'
   db.session.commit()
   return user
 
-def push_dummy_list(user, name):
-  l = List(owner_id=user.id, name=name)
+def push_dummy_list(user, name, level="owner"):
+  l = List(name=name)
   db.session.add(l)
+  db.session.commit()
+  perm = ListPermission(user_id=user.id, list_id=l.id, permission_level=level)
+  db.session.add(perm)
   db.session.commit()
   return l
 
@@ -62,7 +65,7 @@ class UserModelCase(unittest.TestCase):
     d = l.get_days()
     e = Entry(day_id=d[0].id)
     ls = ListSettings(list_id=l.id, user_id=a.id)
-    s = Share(list_id=l.id, owner_id=a.id, grantee_id=b.id)
+    s = ListPermission(list_id=l.id, user_id=b.id)
     db.session.add_all([e, ls, s])
     db.session.commit()
     self.assertEqual(User.query.first(), a)
@@ -70,14 +73,14 @@ class UserModelCase(unittest.TestCase):
     self.assertEqual(Entry.query.first(), e)
     self.assertEqual(Day.query.first(), d[0])
     self.assertEqual(ListSettings.query.first(), ls)
-    self.assertEqual(Share.query.first(), s)
+    self.assertEqual(ListPermission.query.filter_by(user_id=b.id).first(), s)
     a.delete_user()
     self.assertEqual(User.query.first(), b)
     self.assertEqual(List.query.first(), None)
     self.assertEqual(Entry.query.first(), None)
     self.assertEqual(Day.query.first(), None)
     self.assertEqual(ListSettings.query.first(), None)
-    self.assertEqual(Share.query.first(), None)
+    self.assertEqual(ListPermission.query.filter_by(user_id=a.id).first(), None)
 
   def test_password_hashing(self):
     u = User(email='doodle', username='doodle', is_confirmed=False)
@@ -104,7 +107,7 @@ class UserModelCase(unittest.TestCase):
     db.session.commit()
     x = push_dummy_list(v, 'x')
     self.assertEqual(v.get_lists(), [x])
-    s = Share(owner_id=v.id, grantee_id=u.id, list_id=x.id)
+    s = ListPermission(user_id=u.id, list_id=x.id)
     db.session.add(s)
     db.session.commit()
     self.assertEqual(u.get_lists(), [l, c, x])
@@ -144,20 +147,20 @@ class ListModelCase(unittest.TestCase):
     d = l.get_days()
     e = Entry(day_id=d[0].id)
     ls = ListSettings(list_id=l.id, user_id=a.id)
-    s = Share(list_id=l.id, owner_id=a.id, grantee_id=b.id)
+    s = ListPermission(list_id=l.id, permission_level='rw', user_id=b.id)
     db.session.add_all([e, ls, s])
     db.session.commit()
     self.assertEqual(List.query.first(), l)
     self.assertEqual(Entry.query.first(), e)
     self.assertEqual(Day.query.first(), d[0])
     self.assertEqual(ListSettings.query.first(), ls)
-    self.assertEqual(Share.query.first(), s)
+    self.assertEqual(ListPermission.query.filter_by(user_id=b.id).first(), s)
     l.delete_list()
     self.assertEqual(List.query.first(), None)
     self.assertEqual(Entry.query.first(), None)
     self.assertEqual(Day.query.first(), None)
     self.assertEqual(ListSettings.query.first(), None)
-    self.assertEqual(Share.query.first(), None)
+    self.assertEqual(ListPermission.query.first(), None)
 
   def test_list_get_settings_for_user(self):
     a = push_dummy_user('a', 'a')
@@ -180,16 +183,16 @@ class ListModelCase(unittest.TestCase):
   def test_get_users_with_access(self):
     u = push_dummy_user()
     l = push_dummy_list(u, 'l')
-    self.assertEqual(l.get_users_with_access(), [u.id])
+    self.assertEqual(l.get_users_with_access(), [u])
     v = User(email='poodle', username='poodle', is_confirmed=True)
     db.session.add(v)
     db.session.commit()
     x = push_dummy_list(v, 'x')
-    self.assertEqual(x.get_users_with_access(), [v.id])
-    s = Share(owner_id=v.id, grantee_id=u.id, list_id=x.id)
+    self.assertEqual(x.get_users_with_access(), [v])
+    s = ListPermission(user_id=u.id, list_id=x.id, permission_level='rw')
     db.session.add(s)
     db.session.commit()
-    self.assertEqual(x.get_users_with_access(), [u.id, v.id])
+    self.assertEqual(x.get_users_with_access(), [v, u])
 
   def test_get_days(self):
     u = push_dummy_user()
@@ -293,7 +296,7 @@ class ListSettingsModelCase(unittest.TestCase):
     )
 
 
-class ShareModelCase(unittest.TestCase):
+class ListPermissionModelCase(unittest.TestCase):
   def setUp(self):
     self.app = create_app(TestConfig)
     self.app_context = self.app.app_context()
@@ -305,15 +308,15 @@ class ShareModelCase(unittest.TestCase):
     db.drop_all()
     self.app_context.pop()
 
-  def test_repr_share(self):
+  def test_repr_listpermission(self):
     a = push_dummy_user('a', 'a')
     b = push_dummy_user('b', 'b')
     l = push_dummy_list(a, 'l')
-    share = Share(list_id=l.id, owner_id=a.id, grantee_id=b.id)
-    db.session.add(share)
+    lpm = ListPermission(list_id=l.id, user_id=b.id, permission_level='rw')
+    db.session.add(lpm)
     db.session.commit()
     self.assertEqual(
-        share.__repr__(), '<Share 1 of List l from Owner a to User b>')
+        lpm.__repr__(), '<ListPermission 2 of List l to User b at level rw>')
 
 
   def test_get_list(self):
@@ -322,10 +325,10 @@ class ShareModelCase(unittest.TestCase):
     db.session.add(u)
     db.session.commit()
     l = push_dummy_list(u, 'l')
-    s = Share(owner_id=u.id, grantee_id=v.id, list_id=l.id)
+    s = ListPermission(user_id=v.id, list_id=l.id, permission_level='rw')
     db.session.add(s)
     db.session.commit()
-    self.assertEqual(s.get_list(), l)
+    self.assertEqual(s.list_, l)
 
 
 class MainViewCase(unittest.TestCase):
@@ -423,10 +426,13 @@ class MainViewCase(unittest.TestCase):
       self.login(u.username)
       rsp = self.test_client.get('/list/' + str(l.id))
       html = rsp.get_data(as_text=True)
+      self.assertEqual(rsp.status, '200 OK')
       self.assertTrue('Argogaa' not in html)
       rsp = self.test_client.post('/api/update/' + str(entry_1.id), data=dict(
           value='Argogaa'
       ))
+      html = rsp.get_data(as_text=True)
+      print(html)
       self.assertEqual(rsp.status, '200 OK')
       rsp = self.test_client.get('/list/' + str(l.id))
       html = rsp.get_data(as_text=True)
@@ -434,8 +440,8 @@ class MainViewCase(unittest.TestCase):
 
   def test_shared_lists_access(self):
     u = push_dummy_user()
-    l = List(owner_id=u.id, name='Arbitration')
-    c = List(owner_id=u.id, name='Cherrypie')
+    l = push_dummy_list(u, 'Arbitration')
+    c = push_dummy_list(u,  name='Cherrypie')
     db.session.add_all([l, c])
     db.session.commit()
     with self.test_client:
@@ -447,7 +453,7 @@ class MainViewCase(unittest.TestCase):
     v = User(email='poodle', username='poodle', is_confirmed=True)
     db.session.add(v)
     db.session.commit()
-    x = List(owner_id=v.id, name='Xylophone')
+    x = push_dummy_list(v, 'Xylophone')
     db.session.add(x)
     db.session.commit()
     with self.test_client:
@@ -457,7 +463,7 @@ class MainViewCase(unittest.TestCase):
       self.assertTrue('Xylophone' not in html)
       rsp = self.test_client.get('/list/' + str(x.id))
       self.assertEqual(rsp.status, '302 FOUND')
-    s = Share(owner_id=v.id, grantee_id=u.id, list_id=x.id)
+    s = ListPermission(user_id=u.id, list_id=x.id, permission_level='rw')
     db.session.add(s)
     db.session.commit()
     with self.test_client:
@@ -504,16 +510,33 @@ class MainViewCase(unittest.TestCase):
           target=v.username
       ))
       html = rsp.get_data(as_text=True)
-      print(html)
       self.assertEqual(rsp.status, '302 FOUND')
       rsp = self.test_client.get('/list_shares/' + str(l.id))
       html = rsp.get_data(as_text=True)
       self.assertTrue(v.username in html)
-
+      rsp = self.test_client.get('/list/' + str(l.id))
+      html = rsp.get_data(as_text=True)
+      self.assertTrue(l.name in html)
+      rsp = self.test_client.get('/list_shares/' + str(l.id))
+      html = rsp.get_data(as_text=True)
+      self.assertTrue(v.username in html)
+    with self.test_client:
+      self.login(v.username)
+      rsp = self.test_client.post('/list_settings/' + str(l.id), data=dict(
+          name="TestyList",
+          daysToDisplay="15",
+          startDayOfTheWeek="2")
+      )
+      rsp = self.test_client.get('/list/' + str(l.id))
+      html = rsp.get_data(as_text=True)
+      self.assertTrue(l.name in html)
+      rsp = self.test_client.get('/list_shares/' + str(l.id))
+      html = rsp.get_data(as_text=True)
+      self.assertTrue(u.username in html)
 
   def test_unauthenticated(self):
     u = push_dummy_user()
-    l = List(owner_id=u.id, name='TestyList')
+    l = push_dummy_list(u, name='TestyList')
     db.session.add(l)
     db.session.commit()
     day_1 = l.get_days()[0]

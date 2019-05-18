@@ -3,9 +3,11 @@
 {% block settings %}
 <div class="row">
   <ul class="list-group">
-      <li class="list-group-item">{{list.owner.username}} <span class="label label-primary margin-left-5">Owner</span></li>
-    {% for share in list_shares %}
-      <li class="list-group-item">{{share.grantee.username}} <a href="{{url_for('main.drop_share', share_id=share.id, list_id=list.id)}}" class="glyphicon glyphicon-remove text-danger pull-right"></a></li>
+    {% for user in list_.get_owners() %}
+      <li class="list-group-item">{{user.username}} <span class="label label-primary margin-left-5">Owner</span></li>
+    {% endfor %}
+    {% for user in list_.get_non_owners() %}
+      <li class="list-group-item">{{user.username}} <a href="{{url_for('main.drop_share', user_id=user.id, list_id=list_.id)}}" class="glyphicon glyphicon-remove text-danger pull-right"></a></li>
     {% endfor %}
   </ul>
 </div>

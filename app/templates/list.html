@@ -2,10 +2,8 @@
 {% block app_content %}
 <div class="col-md-8">
   <div class="row">
-    <h3>{{list.name}}</h3>
-      {% block apikey %}
-      {% endblock %}
-    <a class="btn btn-default pull-right" href="{{url_for('main.settings', list_id=list.id)}}"><span class="glyphicon glyphicon-cog"></span> Settings</a>
+    <h3>{{list_.name}}</h3>
+    <a class="btn btn-default pull-right" href="{{url_for('main.settings', list_id=list_.id)}}"><span class="glyphicon glyphicon-cog"></span> Settings</a>
   </div>
   <br>
   <div class="row">

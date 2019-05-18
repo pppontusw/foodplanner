@@ -17,7 +17,7 @@ def check_list_access(func):
   def decorated_function(*args, **kwargs):
     list_id = kwargs['list_id']
     list_ = List.query.filter_by(id=list_id).first()
-    if current_user.id not in list_.get_users_with_access():
+    if current_user not in list_.get_users_with_access():
       flash('You don\'t have access to this page', 'danger')
       return redirect(url_for('auth.login'))
     return func(*args, **kwargs)
@@ -29,8 +29,8 @@ def check_list_owner(func):
   def decorated_function(*args, **kwargs):
     list_id = kwargs['list_id']
     list_ = List.query.filter_by(id=list_id).first()
-    if current_user.id != list_.owner.id:
-      flash('Only the list owner can delete the list!', 'danger')
+    if current_user not in list_.get_owners():
+      flash('Only the list owner can do this!', 'danger')
       return redirect(url_for('auth.login'))
     return func(*args, **kwargs)
   return decorated_function
@@ -41,7 +41,7 @@ def check_entry_access(func):
     entry_id = kwargs['entry_id']
     entry = Entry.query.filter_by(id=entry_id).first()
     list_ = entry.day.list_
-    if current_user.id not in list_.get_users_with_access():
+    if current_user not in list_.get_users_with_access():
       flash('You don\'t have access to this page', 'danger')
       return redirect(url_for('auth.login'))
     return func(*args, **kwargs)

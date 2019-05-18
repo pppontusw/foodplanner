@@ -2,11 +2,11 @@
 {% block app_content %}
 <div class="col-md-8">
   <div class="row">
-    <h3>Successfully added list {{list.name}}!</h3>
-    <p>Your API key is: <b>{{list.apikey}}</b></p>
+    <h3>Successfully added list {{list_.name}}!</h3>
+    <p>Your API key is: <b>{{list_.apikey}}</b></p>
     <p>If you need to retrieve this key later, you can do so from the list of lists.</p>
     <p>Next step is to set up the client to send data to this application.</p>
-    <p>Once you have sent some data, click <a href="{{url_for('main.get_list', list_id=list.id)}}">here</a> to see data for your new list!</p>
+    <p>Once you have sent some data, click <a href="{{url_for('main.get_list', list_id=list_.id)}}">here</a> to see data for your new list!</p>
   </div>
 </div>
 {% endblock %}

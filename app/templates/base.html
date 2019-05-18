@@ -32,8 +32,8 @@ Foodlist
               <a href="{{ url_for('main.get_lists') }}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                 aria-expanded="false">Lists <span class="caret"></span></a>
               <ul class="dropdown-menu">
-                {% for list in current_user.get_lists() %}
-                <li><a href="{{ url_for('main.get_list', list_id=list.id) }}">{{list.name}}</a></li>
+                {% for list_ in current_user.get_lists() %}
+                <li><a href="{{ url_for('main.get_list', list_id=list_.id) }}">{{list_.name}}</a></li>
                 {% endfor %}
               </ul>
             </li>
