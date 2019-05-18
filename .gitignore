@@ -12,4 +12,3 @@ secrets.sh
 logs/
 .env*
 alembic-*.ini
-docker-compose.yml
