@@ -1,4 +1,6 @@
-# foodlist
+# foodplanner
+
+[![Build Status](https://travis-ci.org/pppontusw/foodplanner.svg?branch=master)](https://travis-ci.org/pppontusw/foodplanner)
 
 Flask application to store and create weekly food lists
 
