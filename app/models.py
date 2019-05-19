@@ -175,7 +175,7 @@ class Day(db.Model):
     for i in entry_names:
       entry = Entry.query.filter_by(day_id=self.id, key=i).first()
       if not entry:
-        entry = Entry(day_id=self.id, key=i, value='Empty')
+        entry = Entry(day_id=self.id, key=i, value='')
         db.session.add(entry)
         db.session.commit()
     return self.entries

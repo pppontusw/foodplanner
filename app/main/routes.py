@@ -59,7 +59,10 @@ def get_lists():
 def get_list(list_id):
   list_ = List.query.filter_by(id=list_id).first_or_404()
   sett = list_.get_settings_for_user(current_user)
-  d = get_previous_of_weekday(sett.start_day_of_week)
+  if sett.start_day_of_week != -1:
+    d = get_previous_of_weekday(sett.start_day_of_week)
+  else:
+    d = 0
   days = list_.get_days(
       d,
       d + sett.days_to_display

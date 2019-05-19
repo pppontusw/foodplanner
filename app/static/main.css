@@ -9,3 +9,7 @@
 .margin-left-50pc {
   margin-left: 50% !important;
 }
+
+.editable-empty {
+  color: #777 !important
+}
