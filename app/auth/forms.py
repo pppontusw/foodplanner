@@ -51,7 +51,6 @@ class ProfileForm(FlaskForm):
 
   def validate_username(self, username):
     user = User.query.filter_by(username=username.data.lower()).first()
-    print(user == current_user)
     if user is not None and user != current_user:
       raise ValidationError('Please use a different username.')
 

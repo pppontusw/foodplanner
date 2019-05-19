@@ -94,11 +94,9 @@ class List(db.Model):
     return [i.user for i in self.users]
 
   def get_non_owners(self):
-    print("nonowner", [i.user for i in self.users if i.permission_level == 'rw'])
     return [i.user for i in self.users if i.permission_level == 'rw']
 
   def get_owners(self):
-    print("owner", [i.user for i in self.users if i.permission_level == 'owner'])
     return [i.user for i in self.users if i.permission_level == 'owner']
 
   def get_days(self, start=0, end=7):

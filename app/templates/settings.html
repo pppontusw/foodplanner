@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% block app_content %}
-<div class="col-md-6">
+
+<div class="col-md-8">
+
   <div class="row">
-    <a class="btn btn-default pull-right" href="{{url_for('main.get_list', list_id=list_.id)}}">Back</a>
+
     <ul class="nav nav-tabs">
       <li role="presentation" id="ListSettings"><a href="{{url_for('main.list_settings', list_id=list_.id)}}">View</a></li>
       <li role="presentation" id="Foods" class="disabled"><a>Foods</a></li>
@@ -15,5 +17,13 @@
   <br>
   {% block settings %}
   {% endblock %}
+  <hr>
+    <div class="row">
+      <a class="btn btn-default" href="{{url_for('main.get_list', list_id=list_.id)}}">Back</a>
+      {% if current_user in list_.get_owners() %}
+      <a class="btn btn-danger pull-right" href="{{url_for('main.delete_list', list_id=list_.id)}}">Delete List</a>
+      {% endif %}
+    </div>
+    <br>
 </div>
 {% endblock %}

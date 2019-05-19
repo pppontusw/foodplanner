@@ -1,11 +1,7 @@
 {% extends 'base.html' %}
 {% block app_content %}
 <div class="col-md-8">
-  <div class="row">
-    <h3>{{list_.name}}</h3>
-    <a class="btn btn-default pull-right" href="{{url_for('main.settings', list_id=list_.id)}}"><span class="glyphicon glyphicon-cog"></span> Settings</a>
-  </div>
-  <br>
+
   <div class="row">
     <table class="table table-bordered">
       {% for day in days %}
@@ -22,6 +18,11 @@
       {% endfor %}
     </table>
   </div>
+    <div class="row">
+      <a class="btn btn-default pull-right" href="{{url_for('main.settings', list_id=list_.id)}}"><span
+          class="glyphicon glyphicon-cog"></span> List Settings</a>
+    </div>
+    <br>
 </div>
 {% endblock %}
 {% block scripts %}

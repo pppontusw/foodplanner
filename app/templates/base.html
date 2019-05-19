@@ -28,21 +28,6 @@ Foodlist
         </div>
         
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-          <ul class="nav navbar-nav"> 
-            {% if not current_user.is_anonymous %}
-            {% if current_user.get_lists() %}
-            <li class="dropdown">
-              <a href="{{ url_for('main.get_lists') }}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-                aria-expanded="false">Lists <span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                {% for list_ in current_user.get_lists() %}
-                <li><a href="{{ url_for('main.get_list', list_id=list_.id) }}">{{list_.name}}</a></li>
-                {% endfor %}
-              </ul>
-            </li>
-            {% endif %}
-            {% endif %}
-          </ul>
           <ul class="nav navbar-nav navbar-right">
             {% if current_user.is_admin %}
             <li><a href="{{ url_for('admin.index') }}">Admin</a></li>
