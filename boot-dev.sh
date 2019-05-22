@@ -1,5 +1,5 @@
 #!/bin/sh
-source venv/bin/activate
+source /venv/bin/activate
 while true; do
    alembic upgrade head
    if [[ "$?" == "0" ]]; then
