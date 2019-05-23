@@ -18,8 +18,8 @@ RUN adduser -D foodlist
 WORKDIR /home/foodlist
 
 COPY alembic alembic
-COPY .env.dev .env
-COPY alembic-dev.ini alembic.ini
+COPY app app
+COPY alembic.ini alembic.ini
 COPY foodlist.py config.py boot-dev.sh ./
 RUN chmod +x boot-dev.sh
 

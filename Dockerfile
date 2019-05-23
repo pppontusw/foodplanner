@@ -19,8 +19,7 @@ WORKDIR /home/foodlist
 
 COPY alembic alembic
 COPY app app
-COPY .env.prod .env
-COPY alembic-prod.ini alembic.ini
+COPY alembic.ini alembic.ini
 COPY foodlist.py config.py boot.sh ./
 RUN chmod +x boot.sh
 
