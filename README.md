@@ -4,7 +4,7 @@
 
 Flask application to store and create weekly food lists
 
-1. You need a .env file with this content;
+1. Following env variables are used for configuration and should be specified;
 
 ```
 MAIL_USERNAME="noreply@yourdomain.com"
