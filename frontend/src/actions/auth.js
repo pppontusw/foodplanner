@@ -1,6 +1,6 @@
-import axios from "axios";
-import { returnErrors } from "./messages";
-import { API_BASE_URL } from '../constants'
+import axios from 'axios';
+import { returnErrors } from './messages';
+import { API_BASE_URL } from '../constants';
 
 import {
   USER_LOADED,
@@ -11,13 +11,14 @@ import {
   LOGOUT_SUCCESS,
   REGISTER_SUCCESS,
   REGISTER_FAIL,
-  CLEAR_LISTS
-} from "./types";
-
+  CLEAR_LISTS,
+  CLEAR_DAYS,
+  CLEAR_ENTRIES
+} from './types';
 
 export const axios_config = {
   headers: {
-    "Content-Type": "application/json"
+    'Content-Type': 'application/json'
   },
   withCredentials: true
 };
@@ -28,7 +29,7 @@ export const loadUser = () => (dispatch, getState) => {
   dispatch({ type: USER_LOADING });
 
   axios
-    .get(`${API_BASE_URL}/api/auth/user`, {withCredentials: true})
+    .get(`${API_BASE_URL}/api/auth/user`, { withCredentials: true })
     .then(res => {
       dispatch({
         type: USER_LOADED,
@@ -36,7 +37,7 @@ export const loadUser = () => (dispatch, getState) => {
       });
     })
     .catch(err => {
-      dispatch(returnErrors(err.response.data, err.response.status));
+      // dispatch(returnErrors(err.response.data, err.response.status));
       dispatch({
         type: AUTH_ERROR
       });
@@ -45,7 +46,6 @@ export const loadUser = () => (dispatch, getState) => {
 
 // LOGIN USER
 export const login = (username, password) => dispatch => {
-
   // Request Body
   const body = JSON.stringify({ username, password });
 
@@ -66,10 +66,21 @@ export const login = (username, password) => dispatch => {
 };
 
 // REGISTER USER
-export const register = ({ username, firstname, lastname, password, email }) => dispatch => {
-
+export const register = ({
+  username,
+  firstname,
+  lastname,
+  password,
+  email
+}) => dispatch => {
   // Request Body
-  const body = JSON.stringify({ username, firstname, lastname, email, password });
+  const body = JSON.stringify({
+    username,
+    firstname,
+    lastname,
+    email,
+    password
+  });
 
   axios
     .post(`${API_BASE_URL}/api/auth/register`, body, axios_config)
@@ -90,14 +101,12 @@ export const register = ({ username, firstname, lastname, password, email }) => 
 // LOGOUT USER
 export const logout = () => (dispatch, getState) => {
   axios
-    .get(`${API_BASE_URL}/api/auth/logout`, {withCredentials: true})
+    .get(`${API_BASE_URL}/api/auth/logout`, { withCredentials: true })
     .then(res => {
-      dispatch({
-        type: LOGOUT_SUCCESS
-      });
-      dispatch({
-        type: CLEAR_LISTS
-      });
+      dispatch({ type: LOGOUT_SUCCESS });
+      dispatch({ type: CLEAR_LISTS });
+      dispatch({ type: CLEAR_DAYS });
+      dispatch({ type: CLEAR_ENTRIES });
     })
     .catch(err => {
       dispatch(returnErrors(err.response.data, err.response.status));

@@ -6,21 +6,19 @@ from app import db
 from app.api import bp
 from app.api.decorators import list_access_required, entry_access_required, list_owner_required, login_required
 
+
 def get_dict_from_list(l, start_day=0, end_day=7):
   days = l.get_days(start_day, end_day)
+  frontpagedays = l.get_days(0, 4)
   lsettings = l.get_settings_for_user(current_user)
   listdict = {
       'name': l.name,
       'id': l.id,
       'days': [
-          {'day': d.day.strftime('%Y-%m-%dT%H:%M:%SZ'),
-           'id': d.id,
-           'entries': [
-               {'meal': e.key,
-                'value': e.value,
-                'id': e.id
-                } for e in d.get_entries()]
-          } for d in days
+          d.id for d in days
+      ],
+      'frontpagedays': [
+          d.id for d in frontpagedays
       ],
       'settings': {
           'start_day_of_week': lsettings.start_day_of_week,
@@ -30,11 +28,20 @@ def get_dict_from_list(l, start_day=0, end_day=7):
   }
   return listdict
 
+
 def get_previous_of_weekday(d):
   weekday = d - date.today().weekday()
   if weekday > 0:
     weekday -= 7
   return weekday
+
+
+def get_start_day(list_settings):
+  if list_settings.start_day_of_week != -1:
+    d = get_previous_of_weekday(list_settings.start_day_of_week)
+  else:
+    d = 0
+  return d
 
 
 @bp.route('/auth/logout')
@@ -80,7 +87,12 @@ def api_update(entry_id):
   entry = Entry.query.filter_by(id=entry_id).first_or_404()
   entry.value = req['value']
   db.session.commit()
-  return jsonify({'message': 'OK!'}), 201
+  json_obj = {
+      'key': entry.key,
+      'id': entry.id,
+      'value': entry.value
+  }
+  return jsonify(json_obj), 201
 
 
 @bp.route('/lists', methods=['GET'])
@@ -97,11 +109,68 @@ def get_lists():
 def get_list(lid):
   list_ = List.query.filter_by(id=lid).first()
   sett = list_.get_settings_for_user(current_user)
-  if sett.start_day_of_week != -1:
-    d = get_previous_of_weekday(sett.start_day_of_week)
-  else:
-    d = 0
+  d = get_start_day(sett)
   json_obj = get_dict_from_list(list_, d, d + sett.days_to_display)
+  return jsonify([json_obj])
+
+
+@bp.route('/days', methods=['GET'])
+@login_required
+def get_days():
+  lists = current_user.get_lists()
+  frontpagedays = [l.get_days(0, 4) for l in lists]
+  json_obj_days = [{
+      'day': d.day,
+      'id': d.id,
+      'entries': [e.id for e in d.get_entries()]
+  } for sublist in frontpagedays for d in sublist]
+  return jsonify(json_obj_days)
+
+
+@bp.route('/days/<lid>', methods=['GET'])
+@login_required
+@list_access_required
+def get_days_by_list(lid):
+  list_ = List.query.filter_by(id=lid).first()
+  sett = list_.get_settings_for_user(current_user)
+  start_day = get_start_day(sett)
+  days = list_.get_days(start_day, sett.days_to_display)
+  json_obj = [{
+      'day': d.day,
+      'id': d.id,
+      'entries': [e.id for e in d.get_entries()]
+  } for d in days]
+  return jsonify(json_obj)
+
+
+@bp.route('/entry', methods=['GET'])
+@login_required
+def get_entries():
+  lists = current_user.get_lists()
+  frontpagedays = [l.get_days(0, 4) for l in lists]
+  entries = [e.entries for sublist in frontpagedays for e in sublist]
+  json_obj_entries = [{
+      'key': e.key,
+      'id': e.id,
+      'value': e.value
+  } for sublist in entries for e in sublist]
+  return jsonify(json_obj_entries)
+
+
+@bp.route('/entries/<lid>', methods=['GET'])
+@login_required
+@list_access_required
+def get_entries_by_list(lid):
+  list_ = List.query.filter_by(id=lid).first()
+  sett = list_.get_settings_for_user(current_user)
+  start_day = get_start_day(sett)
+  days = list_.get_days(start_day, sett.days_to_display)
+  entries = [e.entries for e in days]
+  json_obj = [{
+      'key': e.key,
+      'id': e.id,
+      'value': e.value
+  } for sublist in entries for e in sublist]
   return jsonify(json_obj)
 
 # TODO probably remove
@@ -119,6 +188,7 @@ def get_list(lid):
 #       shares=[i.user.username for i in list_.users]
 #   )
 #   return jsonify(json_obj)
+
 
 @bp.route('/new_list', methods=['POST'])
 @login_required

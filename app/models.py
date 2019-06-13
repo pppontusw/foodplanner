@@ -10,9 +10,11 @@ from app import db, login
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
+
 @login.user_loader
 def load_user(uid):
   return User.query.get(int(uid))
+
 
 class User(UserMixin, db.Model):
   __tablename__ = 'user'
@@ -115,7 +117,8 @@ class List(db.Model):
     return days
 
   def get_settings_for_user(self, user):
-    settings = ListSettings.query.filter_by(list_id=self.id, user_id=user.id).first()
+    settings = ListSettings.query.filter_by(
+        list_id=self.id, user_id=user.id).first()
     if not settings:
       settings = ListSettings(
           list_id=self.id,
@@ -171,6 +174,7 @@ class Day(db.Model):
     return "<Day {} of List {}>".format(self.day, self.list_.name)
 
   def get_entries(self):
+    # TODO change to get_entries_or_create
     entry_names = self.list_.entry_names.split(',')
     for i in entry_names:
       entry = Entry.query.filter_by(day_id=self.id, key=i).first()

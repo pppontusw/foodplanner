@@ -1,17 +1,35 @@
-export const GET_LISTS = 'GET_LISTS';
-export const GET_ERRORS = "GET_ERRORS";
-export const CREATE_MESSAGE = "CREATE_MESSAGE";
-export const USER_LOADING = "USER_LOADING";
-export const USER_LOADED = "USER_LOADED";
-export const AUTH_ERROR = "AUTH_ERROR";
-export const LOGIN_SUCCESS = "LOGIN_SUCCESS";
-export const LOGIN_FAIL = "LOGIN_FAIL";
-export const LOGOUT_SUCCESS = "LOGOUT_SUCCESS";
-export const REGISTER_SUCCESS = "REGISTER_SUCCESS";
-export const REGISTER_FAIL = "REGISTER_FAIL";
-export const GET_LIST = 'GET_LIST';
-export const CLEAR_LIST = 'CLEAR_LIST';
+// ERRORS & MESSAGES
+export const GET_ERRORS = 'GET_ERRORS';
+export const CREATE_MESSAGE = 'CREATE_MESSAGE';
+
+// DAYS
+export const CLEAR_DAYS = 'CLEAR_DAYS';
+export const GET_DAYS = 'GET_DAYS';
+export const GET_DAYS_SUCCESS = 'GET_DAYS_SUCCESS';
+export const GET_ALL_DAYS_SUCCESS = 'GET_ALL_DAYS_SUCCESS';
+
+// ENTRIES
+export const CLEAR_ENTRIES = 'CLEAR_ENTRIES';
+export const GET_ENTRIES = 'GET_ENTRIES';
+export const GET_ENTRIES_SUCCESS = 'GET_ENTRIES_SUCCESS';
+export const GET_ALL_ENTRIES_SUCCESS = 'GET_ALL_ENTRIES_SUCCESS';
 export const UPDATE_ENTRY = 'UPDATE_ENTRY';
+
+// LISTS
 export const NEW_LIST = 'NEW_LIST';
 export const CLEAR_LISTS = 'CLEAR_LISTS';
+export const GET_LISTS = 'GET_LISTS';
+export const GET_LISTS_SUCCESS = 'GET_LISTS_SUCCESS';
+export const GET_LIST = 'GET_LIST';
+export const GET_LIST_SUCCESS = 'GET_LIST_SUCCESS';
 export const GET_LIST_SETTINGS = 'GET_LIST_SETTINGS';
+
+// AUTH
+export const USER_LOADING = 'USER_LOADING';
+export const USER_LOADED = 'USER_LOADED';
+export const AUTH_ERROR = 'AUTH_ERROR';
+export const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
+export const LOGIN_FAIL = 'LOGIN_FAIL';
+export const LOGOUT_SUCCESS = 'LOGOUT_SUCCESS';
+export const REGISTER_SUCCESS = 'REGISTER_SUCCESS';
+export const REGISTER_FAIL = 'REGISTER_FAIL';
