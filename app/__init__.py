@@ -6,6 +6,7 @@ from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_cors import CORS
 from config import Config
 
 bootstrap = Bootstrap()
@@ -22,6 +23,7 @@ def create_app(config_class=Config):
   login.init_app(app)
   mail.init_app(app)
   bootstrap.init_app(app)
+  CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
   from app.errors import bp as errors_bp
   app.register_blueprint(errors_bp)
@@ -29,6 +31,8 @@ def create_app(config_class=Config):
   app.register_blueprint(auth_bp, url_prefix='/auth')
   from app.admin import bp as admin_bp
   app.register_blueprint(admin_bp, url_prefix='/admin')
+  from app.api import bp as api_bp
+  app.register_blueprint(api_bp, url_prefix='/api')
   from app.main import bp as main_bp
   app.register_blueprint(main_bp)
   from app import models

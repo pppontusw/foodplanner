@@ -172,11 +172,3 @@ def list_shares(list_id):
 
 
 
-@bp.route('/api/update/<entry_id>', methods=['POST'])
-@login_required
-@check_entry_access
-def api_update(entry_id):
-  entry = Entry.query.filter_by(id=entry_id).first_or_404()
-  entry.value = request.form.get('value', 'Emtpy')
-  db.session.commit()
-  return jsonify({'message': 'OK!'})
