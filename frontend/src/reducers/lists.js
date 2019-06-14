@@ -20,7 +20,8 @@ export default function(state = initialState, action) {
     return {
       ...state,
       byId: {},
-      loading: true
+      loading: true,
+      firstFullLoad: true
     };
   }
   if (action.type === GET_LISTS || action.type === GET_LIST) {

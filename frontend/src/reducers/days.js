@@ -1,7 +1,8 @@
 import {
   GET_DAYS,
   GET_DAYS_SUCCESS,
-  GET_ALL_DAYS_SUCCESS
+  GET_ALL_DAYS_SUCCESS,
+  CLEAR_DAYS
 } from '../actions/types';
 import _ from 'lodash';
 
@@ -12,10 +13,18 @@ const initialState = {
 };
 
 export default function(state = initialState, action) {
+  if (action.type === CLEAR_DAYS) {
+    return {
+      ...state,
+      byId: {},
+      loading: true,
+      firstFullLoad: true
+    };
+  }
   if (action.type === GET_DAYS) {
     return {
-      ...state
-      // loading: true
+      ...state,
+      loading: true
     };
   }
   if (action.type === GET_DAYS_SUCCESS) {
