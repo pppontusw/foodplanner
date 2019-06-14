@@ -41,6 +41,9 @@ export const loadUser = () => (dispatch, getState) => {
       dispatch({
         type: AUTH_ERROR
       });
+      dispatch({ type: CLEAR_LISTS });
+      dispatch({ type: CLEAR_DAYS });
+      dispatch({ type: CLEAR_ENTRIES });
     });
 };
 
