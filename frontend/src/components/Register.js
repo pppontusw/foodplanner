@@ -1,18 +1,19 @@
-import React, { Component } from "react";
-import { Link, Redirect } from "react-router-dom";
-import { connect } from "react-redux";
-import PropTypes from "prop-types";
-import { register } from "../actions/auth";
-import { createMessage } from "../actions/messages";
+import React, { Component } from 'react';
+import { Link, Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
+import { register } from '../actions/auth';
+import { createMessage } from '../actions/messages';
+import { Form, Button, Input, Icon } from 'antd';
 
 export class Register extends Component {
   state = {
-    username: "",
-    email: "",
-    firstname: "",
-    lastname: "",
-    password: "",
-    password2: ""
+    username: '',
+    email: '',
+    firstname: '',
+    lastname: '',
+    password: '',
+    password2: ''
   };
 
   static propTypes = {
@@ -22,9 +23,16 @@ export class Register extends Component {
 
   onSubmit = e => {
     e.preventDefault();
-    const { username, email, firstname, lastname, password, password2 } = this.state;
+    const {
+      username,
+      email,
+      firstname,
+      lastname,
+      password,
+      password2
+    } = this.state;
     if (password !== password2) {
-      this.props.createMessage({ passwordNotMatch: "Passwords do not match" });
+      this.props.createMessage({ passwordNotMatch: 'Passwords do not match' });
     } else {
       const newUser = {
         username,
@@ -43,83 +51,94 @@ export class Register extends Component {
     if (this.props.isAuthenticated) {
       return <Redirect to="/" />;
     }
-    const { username, email, firstname, lastname, password, password2 } = this.state;
+    const {
+      username,
+      email,
+      firstname,
+      lastname,
+      password,
+      password2
+    } = this.state;
     return (
-      <div className="col-md-6 m-auto">
-        <div className="card card-body mt-5">
-          <h2 className="text-center">Register</h2>
-          <form onSubmit={this.onSubmit}>
-            <div className="form-group">
-              <label>Username</label>
-              <input
-                type="text"
-                className="form-control"
-                name="username"
-                onChange={this.onChange}
-                value={username}
-              />
-            </div>
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                className="form-control"
-                name="email"
-                onChange={this.onChange}
-                value={email}
-              />
-            </div>
-            <div className="form-group">
-              <label>Firstname</label>
-              <input
-                type="text"
-                className="form-control"
-                name="firstname"
-                onChange={this.onChange}
-                value={firstname}
-              />
-            </div>
-            <div className="form-group">
-              <label>Lastname</label>
-              <input
-                type="text"
-                className="form-control"
-                name="lastname"
-                onChange={this.onChange}
-                value={lastname}
-              />
-            </div>
-            <div className="form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                className="form-control"
-                name="password"
-                onChange={this.onChange}
-                value={password}
-              />
-            </div>
-            <div className="form-group">
-              <label>Confirm Password</label>
-              <input
-                type="password"
-                className="form-control"
-                name="password2"
-                onChange={this.onChange}
-                value={password2}
-              />
-            </div>
-            <div className="form-group">
-              <button type="submit" className="btn btn-primary">
-                Register
-              </button>
-            </div>
-            <p>
-              Already have an account? <Link to="/login">Login</Link>
-            </p>
-          </form>
-        </div>
-      </div>
+      <Form
+        onSubmit={this.onSubmit}
+        layout="horizontal"
+        style={{ maxWidth: '800px', margin: '20px auto' }}
+      >
+        <h2 className="text-center">Register</h2>
+        <Form.Item className="form-group">
+          <Input
+            // prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
+            type="text"
+            className="form-control"
+            name="username"
+            onChange={this.onChange}
+            value={username}
+            placeholder="Username"
+          />
+        </Form.Item>
+        <Form.Item className="form-group">
+          <Input
+            // prefix={<Icon type="mail" style={{ color: 'rgba(0,0,0,.25)' }} />}
+            type="email"
+            className="form-control"
+            name="email"
+            onChange={this.onChange}
+            value={email}
+            placeholder="Email"
+          />
+        </Form.Item>
+        <Form.Item className="form-group">
+          <Input
+            type="text"
+            className="form-control"
+            name="firstname"
+            onChange={this.onChange}
+            value={firstname}
+            placeholder="Firstname"
+          />
+        </Form.Item>
+        <Form.Item>
+          <Input
+            type="text"
+            className="form-control"
+            name="lastname"
+            onChange={this.onChange}
+            value={lastname}
+            placeholder="Lastname"
+          />
+        </Form.Item>
+        <Form.Item>
+          <Input
+            // prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
+            type="password"
+            className="form-control"
+            name="password"
+            onChange={this.onChange}
+            value={password}
+            placeholder="Password"
+          />
+        </Form.Item>
+        <Form.Item>
+          <Input
+            // prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
+            type="password"
+            className="form-control"
+            name="password2"
+            onChange={this.onChange}
+            value={password2}
+            placeholder="Confirm Password"
+          />
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
+            Register
+          </Button>
+          <p>
+            Already have an account? <Link to="/login">Login</Link>
+          </p>
+        </Form.Item>
+      </Form>
     );
   }
 }
