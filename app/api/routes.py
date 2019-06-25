@@ -4,6 +4,7 @@ from app.models import List, Entry, User, ListPermission
 from app import db
 from app.api import bp
 from app.api.decorators import list_access_required, entry_access_required, list_owner_required, login_required
+import calendar
 
 
 def extract_args(args):
@@ -41,6 +42,36 @@ def get_lists():
 def get_list(lid):
   args = extract_args(request.args)
   list_ = List.query.filter_by(id=lid).first()
+  return jsonify([list_.to_dict(args['offset'], args['limit'], args['start_today'])])
+
+
+@bp.route('/lists/<lid>/settings', methods=['PUT'])
+@login_required
+@list_access_required
+def put_list_settings(lid):
+  args = extract_args(request.args)
+  req = request.get_json()
+  list_ = List.query.filter_by(id=lid).first()
+  settings = list_.get_settings_for_user(current_user)
+  if not req['start_day_of_week']:
+    return jsonify({'msg': 'start_day_of_week is required'}), 400
+  if not req['days_to_display']:
+    return jsonify({'msg': 'days_to_display is required'}), 400
+  days_to_display = int(req['days_to_display'])
+  if days_to_display < 5 and days_to_display > 21:
+    return jsonify({'msg': 'days_to_display needs to be a number between 5-21'}), 400
+  allowed_days = list(calendar.day_name)
+  allowed_days.append("Today")
+  start_day_of_week = req['start_day_of_week']
+  if start_day_of_week not in allowed_days:
+    return jsonify({'msg': f'start_day_of_week needs to be one of:  {" ".join(allowed_days)}'}), 400
+  if start_day_of_week == "Today":
+    start_day_of_week = -1
+  else:
+    start_day_of_week = allowed_days.index(start_day_of_week)
+  settings.start_day_of_week = start_day_of_week
+  settings.days_to_display = days_to_display
+  db.session.commit()
   return jsonify([list_.to_dict(args['offset'], args['limit'], args['start_today'])])
 
 

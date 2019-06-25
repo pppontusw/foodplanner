@@ -4,7 +4,8 @@ import {
   GET_LISTS_SUCCESS,
   GET_LIST,
   GET_LIST_SUCCESS,
-  CLEAR_LISTS
+  CLEAR_LISTS,
+  PUT_LIST_SETTINGS
 } from '../actions/types';
 import produce from 'immer';
 import _ from 'lodash';
@@ -30,7 +31,7 @@ export default function(state = initialState, action) {
       loading: true
     };
   }
-  if (action.type === GET_LIST_SUCCESS) {
+  if (action.type === GET_LIST_SUCCESS || action.type === PUT_LIST_SETTINGS) {
     const listsById = _.keyBy(action.payload, 'id');
     return {
       ...state,

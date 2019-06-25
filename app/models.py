@@ -119,7 +119,6 @@ class List(db.Model):
         db.session.add(day)
         db.session.commit()
       days.append(day)
-    print([d.day for d in days])
     return days
 
   def get_settings_for_user(self, user):
@@ -159,7 +158,7 @@ class List(db.Model):
             d.id for d in days
         ],
         'settings': {
-            'start_day_of_week': list_settings.start_day_of_week,
+            'start_day_of_week': List.get_weekday_from_int(list_settings.start_day_of_week),
             'days_to_display': list_settings.days_to_display
         },
         'shares': [i.user.username for i in self.users]
@@ -172,6 +171,16 @@ class List(db.Model):
     if weekday > 0:
       weekday -= 7
     return weekday
+
+  @staticmethod
+  def get_weekday_from_int(int_):
+    if int_ == -1:
+      return "Today"
+    if (int_ < 0 or int_ > 6):
+      raise ValueError("This integer cannot represent a weekday")
+    days = ["Monday", "Tuesday", "Wednesday",
+            "Thursday", "Friday", "Saturday", "Sunday"]
+    return days[int_]
 
   def get_start_day(self):
     list_settings = self.get_settings_for_user(current_user)

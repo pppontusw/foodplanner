@@ -9,7 +9,8 @@ import {
   GET_ENTRIES,
   GET_DAYS,
   CLEAR_DAYS,
-  CLEAR_ENTRIES
+  CLEAR_ENTRIES,
+  PUT_LIST_SETTINGS
 } from './types';
 import { getDaysByListThenEntries } from './days';
 import { returnErrors } from './messages';
@@ -101,6 +102,29 @@ export const getListSettings = lid => dispatch => {
     .then(res => {
       dispatch({
         type: GET_LIST_SETTINGS,
+        payload: res.data
+      });
+    })
+    .catch(err => {
+      dispatch(returnErrors(err));
+    });
+};
+
+export const putListSettings = (
+  list_id,
+  days_to_display,
+  start_day_of_week
+) => dispatch => {
+  const body = {
+    days_to_display,
+    start_day_of_week
+  };
+
+  axios
+    .put(`${API_BASE_URL}/api/lists/${list_id}/settings`, body, axios_config)
+    .then(res => {
+      dispatch({
+        type: PUT_LIST_SETTINGS,
         payload: res.data
       });
     })

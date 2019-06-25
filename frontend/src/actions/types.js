@@ -23,6 +23,7 @@ export const GET_LISTS_SUCCESS = 'GET_LISTS_SUCCESS';
 export const GET_LIST = 'GET_LIST';
 export const GET_LIST_SUCCESS = 'GET_LIST_SUCCESS';
 export const GET_LIST_SETTINGS = 'GET_LIST_SETTINGS';
+export const PUT_LIST_SETTINGS = 'PUT_LIST_SETTINGS';
 
 // AUTH
 export const USER_LOADING = 'USER_LOADING';
