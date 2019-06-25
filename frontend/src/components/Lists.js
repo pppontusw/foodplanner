@@ -1,7 +1,9 @@
 import React, { Component, Fragment } from 'react';
-// import { Link, Redirect } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { getData, createList } from '../actions';
+import { getLists, createList } from '../actions/lists';
+import { getDays } from '../actions/days';
+import { getEntries } from '../actions/entries';
 import _ from 'lodash';
 import Day from './Day';
 import Loader from './Loader';
@@ -27,7 +29,9 @@ export class Lists extends Component {
   };
 
   componentDidMount() {
-    this.props.getData();
+    this.props.getLists(0, 2);
+    this.props.getDays(0, 2);
+    this.props.getEntries(0, 2);
   }
 
   onSubmit = e => {
@@ -84,16 +88,12 @@ export class Lists extends Component {
                 loading={this.props.firstFullLoad}
                 title={list.name}
                 style={{ margin: '10px 10px' }}
+                extra={<Link to={`/list/${list.id}`}>Go to list</Link>}
                 // className={this.props.lists.length > 1 ? 'col-md-6' : 'col-md-12'}
               >
-                {/* <h1 className="text-center">
-                  <a href={`#/list/${list.id}`}>{list.name}</a>
-                </h1> */}
-                <table className="table">
-                  {list.frontpagedays.map((day, day_index) => (
-                    <Day key={day} listId={list.id} dayId={day} />
-                  ))}
-                </table>
+                {list.days.map((day, day_index) => (
+                  <Day key={day} listId={list.id} dayId={day} />
+                ))}
               </Card>
             </Col>
           ))}
@@ -114,5 +114,5 @@ export class Lists extends Component {
 
 export default connect(
   mapStateToProps,
-  { getData, createList }
+  { getLists, createList, getDays, getEntries }
 )(Lists);

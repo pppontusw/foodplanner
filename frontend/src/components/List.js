@@ -1,38 +1,46 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { getData, getList, getDaysAndEntries } from '../actions';
+import { getList } from '../actions/lists';
+import { getDaysByList } from '../actions/days';
+import { getEntriesByList } from '../actions/entries';
 import { Link } from 'react-router-dom';
 import Day from './Day';
-import Loader from './Loader';
+import { Card, Button } from 'antd';
 
 export class List extends Component {
   componentDidMount() {
-    this.props.getList(this.props.match.params.id);
-    this.props.getDaysAndEntries(this.props.match.params.id);
+    this.props.getList(this.props.match.params.id, 0, 15);
+    this.props.getDaysByList(this.props.match.params.id);
+    this.props.getEntriesByList(this.props.match.params.id);
   }
 
   render() {
-    const { loading } = this.props;
+    const { loading, list } = this.props;
 
-    if (loading) {
-      return <Loader />;
-    }
+    // if (loading) {
+    //   return <Loader />;
+    // }
 
     return (
       <div className="row">
-        <div className="col-md-12">
-          <h2>{this.props.list ? this.props.list.name : null}</h2>
-          <Link to={`/list_settings/${this.props.list.id}`}>
-            <button className="btn btn-info float-right">Settings</button>
-          </Link>
+        <Card
+          loading={loading}
+          title={list ? list.name : null}
+          style={{ margin: '10px 10px', maxWidth: '600px' }}
+        >
+          {list ? (
+            <Link to={`/list_settings/${list.id}`}>
+              <Button style={{ float: 'right' }}>Settings</Button>
+            </Link>
+          ) : null}
           <br />
           <br />
-          <table className="table">
-            {this.props.list.days.map((day, day_index) => (
-              <Day key={day} listId={this.props.list.id} dayId={day} />
-            ))}
-          </table>
-        </div>
+          {list
+            ? list.days.map((day, day_index) => (
+                <Day key={day} listId={list.id} dayId={day} />
+              ))
+            : null}
+        </Card>
       </div>
     );
   }
@@ -49,5 +57,5 @@ export default connect(
       loading: listLoading
     };
   },
-  { getData, getDaysAndEntries, getList }
+  { getDaysByList, getEntriesByList, getList }
 )(List);

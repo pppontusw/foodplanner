@@ -1,11 +1,12 @@
 from time import time
 from datetime import date, timedelta
 from os import urandom
+import json
 from binascii import b2a_hex
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 import jwt
-from flask import current_app
+from flask import current_app, jsonify
 from app import db, login
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
@@ -103,10 +104,13 @@ class List(db.Model):
   def get_owners(self):
     return [i.user for i in self.users if i.permission_level == 'owner']
 
-  def get_days(self, start=0, end=7):
+  def get_days(self, offset=0, limit=None, start_today=False):
     now = date.today()
+    list_settings = self.get_settings_for_user(current_user)
     days = []
-    for i in range(start, end):
+    start_day = 0 if start_today else self.get_start_day()
+    end_day = limit if limit else list_settings.days_to_display
+    for i in range(start_day + offset, end_day + offset):
       delta = timedelta(days=i)
       day = Day.query.filter_by(day=now+delta, list_id=self.id).first()
       if not day:
@@ -142,6 +146,38 @@ class List(db.Model):
       db.session.delete(userperm)
     db.session.delete(self)
     db.session.commit()
+
+  def to_dict(self, offset=0, limit=None, start_today=False):
+    list_settings = self.get_settings_for_user(current_user)
+    days = self.get_days(offset, limit, start_today)
+    listdict = {
+        'name': self.name,
+        'id': self.id,
+        'days': [
+            d.id for d in days
+        ],
+        'settings': {
+            'start_day_of_week': list_settings.start_day_of_week,
+            'days_to_display': list_settings.days_to_display
+        },
+        'shares': [i.user.username for i in self.users]
+    }
+    return listdict
+
+  @staticmethod
+  def get_previous_of_weekday(d):
+    weekday = d - date.today().weekday()
+    if weekday > 0:
+      weekday -= 7
+    return weekday
+
+  def get_start_day(self):
+    list_settings = self.get_settings_for_user(current_user)
+    if list_settings.start_day_of_week != -1:
+      d = List.get_previous_of_weekday(list_settings.start_day_of_week)
+    else:
+      d = 0
+    return d
 
 
 class ListSettings(db.Model):
@@ -184,6 +220,13 @@ class Day(db.Model):
         db.session.commit()
     return self.entries
 
+  def to_dict(self):
+    return {
+        'day': self.day.isoformat(),
+        'id': self.id,
+        'entries': [e.id for e in self.get_entries()]
+    }
+
 
 class Entry(db.Model):
   __tablename__ = 'entry'
@@ -196,6 +239,13 @@ class Entry(db.Model):
 
   def __repr__(self):
     return "<Entry {} of Day {} in List {}>".format(self.id, self.day.day, self.day.list_.name)
+
+  def to_dict(self):
+    return {
+        'key': self.key,
+        'id': self.id,
+        'value': self.value
+    }
 
 
 class ListPermission(db.Model):

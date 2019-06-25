@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import EasyEdit from 'react-easy-edit';
 import { connect } from 'react-redux';
-import { updateEntry } from '../actions';
+import { updateEntry } from '../actions/entries';
+import { Row } from 'antd';
 
 class Entry extends Component {
   saveEntry(entry_id, text) {
@@ -14,24 +15,31 @@ class Entry extends Component {
       return null;
     }
     return (
-      <tbody key={entry.id}>
-        <tr className="d-flex">
-          <td className="col-sm-4 col-3 col-md-6">{entry.key}</td>
-          <td className="col-sm-8 col-9 col-md-6">
-            <EasyEdit
-              labelClassName={`label_${entry.id}`}
-              value={entry.value}
-              type="text"
-              saveButtonStyle="btn btn-sm btn-primary ml-2"
-              saveButtonLabel="✓"
-              cancelButtonStyle="btn btn-sm btn-secondary ml-1"
-              cancelButtonLabel="✕"
-              placeholder="Empty"
-              onSave={this.saveEntry.bind(this, entry.id)}
-            />
-          </td>
-        </tr>
-      </tbody>
+      // // <tbody key={entry.id}>
+      //   {/* <tr className="d-flex"> */}
+      //     {/* <td className="col-sm-4 col-3 col-md-6">{entry.key}</td> */}
+      //     {/* <td className="col-sm-8 col-9 col-md-6"> */}
+      //     {/* </td> */}
+      //   {/* </tr> */}
+      // {/* </tbody> */}
+      <Row>
+        <div style={{ float: 'left' }}>
+          <p>{entry.key}</p>
+        </div>
+        <div style={{ float: 'right' }}>
+          <EasyEdit
+            labelClassName={`label_${entry.id}`}
+            value={entry.value}
+            type="text"
+            saveButtonStyle="btn btn-sm btn-primary ml-2"
+            saveButtonLabel="✓"
+            cancelButtonStyle="btn btn-sm btn-secondary ml-1"
+            cancelButtonLabel="✕"
+            placeholder="Empty"
+            onSave={this.saveEntry.bind(this, entry.id)}
+          />
+        </div>
+      </Row>
     );
   }
 }

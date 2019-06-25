@@ -1,12 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import { connect } from 'react-redux';
-import { getListSettings } from '../../actions';
-
-const mapStateToProps = state => {
-  return {
-    list: state.list.list
-  };
-};
+import { getListSettings } from '../../actions/lists';
 
 export class ListSettings extends Component {
   componentDidMount() {
@@ -19,6 +13,15 @@ export class ListSettings extends Component {
 }
 
 export default connect(
-  mapStateToProps,
+  (state, props) => {
+    const list = state.lists.byId[props.match.params.id];
+    const listLoading =
+      state.lists.loading || state.days.loading || state.entries.loading;
+
+    return {
+      list,
+      loading: listLoading
+    };
+  },
   { getListSettings }
 )(ListSettings);

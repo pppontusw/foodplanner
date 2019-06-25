@@ -1,5 +1,4 @@
-from datetime import date
-from flask import jsonify, request, g
+from flask import jsonify, request
 from flask_login import login_user, current_user, logout_user
 from app.models import List, Entry, User, ListPermission
 from app import db
@@ -7,41 +6,134 @@ from app.api import bp
 from app.api.decorators import list_access_required, entry_access_required, list_owner_required, login_required
 
 
-def get_dict_from_list(l, start_day=0, end_day=7):
-  days = l.get_days(start_day, end_day)
-  frontpagedays = l.get_days(0, 4)
-  lsettings = l.get_settings_for_user(current_user)
-  listdict = {
-      'name': l.name,
-      'id': l.id,
-      'days': [
-          d.id for d in days
-      ],
-      'frontpagedays': [
-          d.id for d in frontpagedays
-      ],
-      'settings': {
-          'start_day_of_week': lsettings.start_day_of_week,
-          'days_to_display': lsettings.days_to_display
-      },
-      'shares': [i.user.username for i in l.users]
-  }
-  return listdict
+def extract_args(args):
+  offset = int(args.get('offset')) if 'offset' in args else 0
+  limit = int(args.get('limit')) if 'limit' in args else None
+  start_today = bool(
+      args.get('start_today')) if 'start_today' in args else False
+  return dict(offset=offset, limit=limit, start_today=start_today)
 
 
-def get_previous_of_weekday(d):
-  weekday = d - date.today().weekday()
-  if weekday > 0:
-    weekday -= 7
-  return weekday
+@bp.route('/entries/<entry_id>', methods=['PUT'])
+@login_required
+@entry_access_required
+def put_entry(entry_id):
+  req = request.get_json()
+  entry = Entry.query.filter_by(id=entry_id).first_or_404()
+  entry.value = req['value']
+  db.session.commit()
+  return jsonify(entry.to_dict()), 201
 
 
-def get_start_day(list_settings):
-  if list_settings.start_day_of_week != -1:
-    d = get_previous_of_weekday(list_settings.start_day_of_week)
-  else:
-    d = 0
-  return d
+@bp.route('/lists', methods=['GET'])
+@login_required
+def get_lists():
+  args = extract_args(request.args)
+  lists = current_user.get_lists()
+  json_obj = [l.to_dict(args['offset'], args['limit'],
+                        args['start_today']) for l in lists]
+  return jsonify(json_obj), 200
+
+
+@bp.route('/lists/<lid>', methods=['GET'])
+@login_required
+@list_access_required
+def get_list(lid):
+  args = extract_args(request.args)
+  list_ = List.query.filter_by(id=lid).first()
+  return jsonify([list_.to_dict(args['offset'], args['limit'], args['start_today'])])
+
+
+@bp.route('/days', methods=['GET'])
+@login_required
+def get_days():
+  args = extract_args(request.args)
+  lists = current_user.get_lists()
+  days = [
+      l.get_days(args['offset'], args['limit'], args['start_today']) for l in lists
+  ]
+  json_obj_days = [day.to_dict() for sublist in days for day in sublist]
+  return jsonify(json_obj_days)
+
+
+@bp.route('/lists/<lid>/days', methods=['GET'])
+@login_required
+@list_access_required
+def get_days_by_list(lid):
+  args = extract_args(request.args)
+  list_ = List.query.filter_by(id=lid).first()
+  days = list_.get_days(args['offset'], args['limit'], args['start_today'])
+  json_obj = [{
+      'day': d.day,
+      'id': d.id,
+      'entries': [e.id for e in d.get_entries()]
+  } for d in days]
+  return jsonify(json_obj)
+
+
+@bp.route('/entries', methods=['GET'])
+@login_required
+def get_entries():
+  args = extract_args(request.args)
+  lists = current_user.get_lists()
+  days = [l.get_days(args['offset'], args['limit'],
+                     args['start_today']) for l in lists]
+  entries = [e.entries for sublist in days for e in sublist]
+  json_obj_entries = [e.to_dict() for sublist in entries for e in sublist]
+  return jsonify(json_obj_entries)
+
+
+@bp.route('/lists/<lid>/entries', methods=['GET'])
+@login_required
+@list_access_required
+def get_entries_by_list(lid):
+  args = extract_args(request.args)
+  list_ = List.query.filter_by(id=lid).first()
+  days = list_.get_days(args['offset'], args['limit'], args['start_today'])
+  entries = [e.entries for e in days]
+  json_obj = [e.to_dict() for sublist in entries for e in sublist]
+  return jsonify(json_obj)
+
+
+@bp.route('/lists', methods=['POST'])
+@login_required
+def post_list():
+  req = request.get_json()
+  if req['listname'] == "":
+    return jsonify({'msg': 'Listname cannot be empty'}), 400
+  list_ = List(name=req['listname'])
+  list_.generate_api_key()
+  db.session.add(list_)
+  db.session.commit()
+  perm = ListPermission(
+      list_id=list_.id, user_id=current_user.id, permission_level='owner')
+  db.session.add(perm)
+  db.session.commit()
+  return jsonify(list_.to_dict()), 201
+
+
+######################
+###                ###
+### Authentication ###
+###                ###
+######################
+
+@bp.route('/auth/login', methods=['POST'])
+def login():
+  req = request.get_json()
+  u = User.query.filter_by(username=req['username']).first()
+  if u is None or not u.check_password(req['password']):
+    return jsonify({'msg': 'Invalid username or password!'}), 401
+  login_user(u)
+  return jsonify({'msg': 'Login successful',
+                  'user': u.username}), 200
+
+
+@bp.route('/auth/user', methods=['GET'])
+def user():
+  if current_user.is_authenticated:
+    return jsonify({'msg': 'Session still valid', 'user': current_user.username}), 200
+  return jsonify({'msg': 'Please log in'}), 401
 
 
 @bp.route('/auth/logout')
@@ -77,150 +169,3 @@ def register():
   login_user(u)
   return jsonify({'msg': 'Registered successfully',
                   'user': u.username}), 200
-
-
-@bp.route('/update/<entry_id>', methods=['POST'])
-@login_required
-@entry_access_required
-def api_update(entry_id):
-  req = request.get_json()
-  entry = Entry.query.filter_by(id=entry_id).first_or_404()
-  entry.value = req['value']
-  db.session.commit()
-  json_obj = {
-      'key': entry.key,
-      'id': entry.id,
-      'value': entry.value
-  }
-  return jsonify(json_obj), 201
-
-
-@bp.route('/lists', methods=['GET'])
-@login_required
-def get_lists():
-  lists = current_user.get_lists()
-  json_obj = [get_dict_from_list(l, 0, 4) for l in lists]
-  return jsonify(json_obj), 200
-
-
-@bp.route('/list/<lid>', methods=['GET'])
-@login_required
-@list_access_required
-def get_list(lid):
-  list_ = List.query.filter_by(id=lid).first()
-  sett = list_.get_settings_for_user(current_user)
-  d = get_start_day(sett)
-  json_obj = get_dict_from_list(list_, d, d + sett.days_to_display)
-  return jsonify([json_obj])
-
-
-@bp.route('/days', methods=['GET'])
-@login_required
-def get_days():
-  lists = current_user.get_lists()
-  frontpagedays = [l.get_days(0, 4) for l in lists]
-  json_obj_days = [{
-      'day': d.day,
-      'id': d.id,
-      'entries': [e.id for e in d.get_entries()]
-  } for sublist in frontpagedays for d in sublist]
-  return jsonify(json_obj_days)
-
-
-@bp.route('/days/<lid>', methods=['GET'])
-@login_required
-@list_access_required
-def get_days_by_list(lid):
-  list_ = List.query.filter_by(id=lid).first()
-  sett = list_.get_settings_for_user(current_user)
-  start_day = get_start_day(sett)
-  days = list_.get_days(start_day, sett.days_to_display)
-  json_obj = [{
-      'day': d.day,
-      'id': d.id,
-      'entries': [e.id for e in d.get_entries()]
-  } for d in days]
-  return jsonify(json_obj)
-
-
-@bp.route('/entry', methods=['GET'])
-@login_required
-def get_entries():
-  lists = current_user.get_lists()
-  frontpagedays = [l.get_days(0, 4) for l in lists]
-  entries = [e.entries for sublist in frontpagedays for e in sublist]
-  json_obj_entries = [{
-      'key': e.key,
-      'id': e.id,
-      'value': e.value
-  } for sublist in entries for e in sublist]
-  return jsonify(json_obj_entries)
-
-
-@bp.route('/entries/<lid>', methods=['GET'])
-@login_required
-@list_access_required
-def get_entries_by_list(lid):
-  list_ = List.query.filter_by(id=lid).first()
-  sett = list_.get_settings_for_user(current_user)
-  start_day = get_start_day(sett)
-  days = list_.get_days(start_day, sett.days_to_display)
-  entries = [e.entries for e in days]
-  json_obj = [{
-      'key': e.key,
-      'id': e.id,
-      'value': e.value
-  } for sublist in entries for e in sublist]
-  return jsonify(json_obj)
-
-# TODO probably remove
-# @bp.route('/list_settings/<lid>', methods=['GET'])
-# @login_required
-# @list_access_required
-# def get_list_settings(lid):
-#   list_ = List.query.filter_by(id=lid).first()
-#   lsettings = list_.get_settings_for_user(current_user)
-#   json_obj = dict(
-#       settings=dict(
-#           start_day_of_week=lsettings.start_day_of_week,
-#           days_to_display=lsettings.days_to_display
-#       ),
-#       shares=[i.user.username for i in list_.users]
-#   )
-#   return jsonify(json_obj)
-
-
-@bp.route('/new_list', methods=['POST'])
-@login_required
-def new_list():
-  req = request.get_json()
-  if req['listname'] == "":
-    return jsonify({'msg': 'Listname cannot be empty'}), 400
-  list_ = List(name=req['listname'])
-  list_.generate_api_key()
-  db.session.add(list_)
-  db.session.commit()
-  perm = ListPermission(
-      list_id=list_.id, user_id=current_user.id, permission_level='owner')
-  db.session.add(perm)
-  db.session.commit()
-  json_obj = get_dict_from_list(list_, 0, 4)
-  return jsonify(json_obj), 201
-
-
-@bp.route('/auth/login', methods=['POST'])
-def login():
-  req = request.get_json()
-  u = User.query.filter_by(username=req['username']).first()
-  if u is None or not u.check_password(req['password']):
-    return jsonify({'msg': 'Invalid username or password!'}), 401
-  login_user(u)
-  return jsonify({'msg': 'Login successful',
-                  'user': u.username}), 200
-
-
-@bp.route('/auth/user', methods=['GET'])
-def user():
-  if current_user.is_authenticated:
-    return jsonify({'msg': 'Session still valid', 'user': current_user.username}), 200
-  return jsonify({'msg': 'Please log in'}), 401

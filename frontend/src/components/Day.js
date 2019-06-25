@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import moment from 'moment';
 import { connect } from 'react-redux';
 import Entry from './Entry';
+import { Card } from 'antd';
 
 class Day extends Component {
   render() {
@@ -11,19 +12,19 @@ class Day extends Component {
     }
     return (
       <React.Fragment key={day.id}>
-        <thead className="thead-light">
-          <tr className="active d-flex">
+        <Card type="inner" title={moment.utc(day.day).format('MMM Do')}>
+          {/* <tr className="active d-flex">
             <th className="col-sm-4 col-3 col-md-6">
               {moment.utc(day.day).format('dddd')}
             </th>
             <th className="col-sm-8 col-9 col-md-6">
               {moment.utc(day.day).format('MMM Do')}
             </th>
-          </tr>
-        </thead>
-        {day.entries.map((entry, entry_index) => (
-          <Entry key={entry} entryId={entry} />
-        ))}
+          </tr> */}
+          {day.entries.map((entry, entry_index) => (
+            <Entry key={entry} entryId={entry} />
+          ))}
+        </Card>
       </React.Fragment>
     );
   }
