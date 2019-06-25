@@ -10,7 +10,7 @@
           <th>{{day.day.strftime('%A')}}</th>
           <th>{{day.day}}</th>
         </tr>
-        {% for entry in day.get_entries() %}
+        {% for entry in day.get_or_create_entries() %}
         <tr>
           <td>{{entry.key}}</td>
           <td>{{entry.value}}</td>

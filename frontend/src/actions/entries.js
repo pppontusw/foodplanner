@@ -12,13 +12,16 @@ import {
 export const getEntriesByList = (
   list_id,
   offset = 0,
-  limit = false
+  limit = false,
+  suppressLoading = true
 ) => dispatch => {
   let url = `${API_BASE_URL}/api/lists/${list_id}/entries?offset=${offset}`;
   if (limit) {
     url += `&limit=${limit}`;
   }
-  dispatch({ type: GET_ENTRIES });
+  if (!suppressLoading) {
+    dispatch({ type: GET_ENTRIES });
+  }
   axios
     .get(url, axios_config)
     .then(res => {

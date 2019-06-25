@@ -1,18 +1,57 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { getList } from '../actions/lists';
-import { getDaysByList } from '../actions/days';
-import { getEntriesByList } from '../actions/entries';
+import { getListThenDaysThenEntries } from '../actions/lists';
 import { Link } from 'react-router-dom';
 import Day from './Day';
-import { Card, Button } from 'antd';
+import { Card, Button, Icon } from 'antd';
 
 export class List extends Component {
+  state = {
+    page: 0,
+    visitedPages: [0]
+  };
+
   componentDidMount() {
-    this.props.getList(this.props.match.params.id, 0, 15);
-    this.props.getDaysByList(this.props.match.params.id);
-    this.props.getEntriesByList(this.props.match.params.id);
+    this.props.getListThenDaysThenEntries(
+      this.props.match.params.id,
+      this.state.page
+    );
   }
+
+  refreshData = suppressLoading => {
+    this.props.getListThenDaysThenEntries(
+      this.props.match.params.id,
+      this.state.page,
+      false,
+      suppressLoading
+    );
+  };
+
+  pageBack = () => {
+    let suppressLoading = true;
+    const { page, visitedPages } = this.state;
+    const newPage = page - 1;
+    if (!visitedPages.includes(newPage)) {
+      visitedPages.push(newPage);
+      suppressLoading = false;
+    }
+    this.setState({ page: newPage, visitedPages: visitedPages }, () => {
+      this.refreshData(suppressLoading);
+    });
+  };
+
+  pageForward = () => {
+    let suppressLoading = true;
+    const { page, visitedPages } = this.state;
+    const newPage = page + 1;
+    if (!visitedPages.includes(newPage)) {
+      visitedPages.push(newPage);
+      suppressLoading = false;
+    }
+    this.setState({ page: newPage, visitedPages: visitedPages }, () => {
+      this.refreshData(suppressLoading);
+    });
+  };
 
   render() {
     const { loading, list } = this.props;
@@ -22,24 +61,43 @@ export class List extends Component {
     // }
 
     return (
-      <div className="row">
+      <div>
         <Card
           loading={loading}
           title={list ? list.name : null}
           style={{ margin: '10px 10px', maxWidth: '600px' }}
+          extra={
+            list ? (
+              <Link to={`/list_settings/${list.id}`}>
+                <Button
+                // style={{ float: 'right', marginTop: '10px' }}
+                >
+                  <Icon type="setting" />
+                </Button>
+              </Link>
+            ) : null
+          }
         >
-          {list ? (
-            <Link to={`/list_settings/${list.id}`}>
-              <Button style={{ float: 'right' }}>Settings</Button>
-            </Link>
-          ) : null}
-          <br />
-          <br />
           {list
             ? list.days.map((day, day_index) => (
                 <Day key={day} listId={list.id} dayId={day} />
               ))
             : null}
+
+          <div style={{ display: 'flex' }}>
+            <Button
+              style={{ marginRight: 'auto', marginTop: '20px' }}
+              onClick={this.pageBack}
+            >
+              <Icon type="left-circle" />
+            </Button>
+            <Button
+              style={{ marginLeft: 'auto', marginTop: '20px' }}
+              onClick={this.pageForward}
+            >
+              <Icon type="right-circle" />
+            </Button>
+          </div>
         </Card>
       </div>
     );
@@ -57,5 +115,5 @@ export default connect(
       loading: listLoading
     };
   },
-  { getDaysByList, getEntriesByList, getList }
+  { getListThenDaysThenEntries }
 )(List);

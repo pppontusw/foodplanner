@@ -108,9 +108,10 @@ class List(db.Model):
     now = date.today()
     list_settings = self.get_settings_for_user(current_user)
     days = []
+    days_to_display = list_settings.days_to_display
     start_day = 0 if start_today else self.get_start_day()
-    end_day = limit if limit else list_settings.days_to_display
-    for i in range(start_day + offset, end_day + offset):
+    end_day = limit if limit else days_to_display
+    for i in range(start_day + (offset * days_to_display), end_day + (offset * days_to_display)):
       delta = timedelta(days=i)
       day = Day.query.filter_by(day=now+delta, list_id=self.id).first()
       if not day:
@@ -118,6 +119,7 @@ class List(db.Model):
         db.session.add(day)
         db.session.commit()
       days.append(day)
+    print([d.day for d in days])
     return days
 
   def get_settings_for_user(self, user):
@@ -206,10 +208,21 @@ class Day(db.Model):
   list_ = db.relationship("List", back_populates='days')
   entries = db.relationship("Entry")
 
+  def __init__(self, **kwargs):
+    super(Day, self).__init__(**kwargs)
+    list_ = List.query.filter_by(id=kwargs['list_id']).first()
+    entry_names = list_.entry_names.split(',')
+    for i in entry_names:
+      entry = Entry.query.filter_by(day_id=self.id, key=i).first()
+      if not entry:
+        entry = Entry(day_id=self.id, key=i, value='')
+        db.session.add(entry)
+        db.session.commit()
+
   def __repr__(self):
     return "<Day {} of List {}>".format(self.day, self.list_.name)
 
-  def get_entries(self):
+  def get_or_create_entries(self):
     # TODO change to get_entries_or_create
     entry_names = self.list_.entry_names.split(',')
     for i in entry_names:
@@ -224,7 +237,7 @@ class Day(db.Model):
     return {
         'day': self.day.isoformat(),
         'id': self.id,
-        'entries': [e.id for e in self.get_entries()]
+        'entries': [e.id for e in self.get_or_create_entries()]
     }
 
 

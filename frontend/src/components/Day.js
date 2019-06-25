@@ -12,15 +12,11 @@ class Day extends Component {
     }
     return (
       <React.Fragment key={day.id}>
-        <Card type="inner" title={moment.utc(day.day).format('MMM Do')}>
-          {/* <tr className="active d-flex">
-            <th className="col-sm-4 col-3 col-md-6">
-              {moment.utc(day.day).format('dddd')}
-            </th>
-            <th className="col-sm-8 col-9 col-md-6">
-              {moment.utc(day.day).format('MMM Do')}
-            </th>
-          </tr> */}
+        <Card
+          style={{ marginTop: '16px' }}
+          type="inner"
+          title={moment.utc(day.day).format('MMM Do')}
+        >
           {day.entries.map((entry, entry_index) => (
             <Entry key={entry} entryId={entry} />
           ))}

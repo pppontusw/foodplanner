@@ -1,19 +1,26 @@
 import {
   GET_LISTS,
   GET_LIST,
+  CLEAR_LISTS,
   NEW_LIST,
   GET_LIST_SETTINGS,
   GET_LISTS_SUCCESS,
-  GET_LIST_SUCCESS
+  GET_LIST_SUCCESS,
+  GET_ENTRIES,
+  GET_DAYS,
+  CLEAR_DAYS,
+  CLEAR_ENTRIES
 } from './types';
-import { getDaysByList } from './days';
-import { getEntriesByList } from './entries';
+import { getDaysByListThenEntries } from './days';
 import { returnErrors } from './messages';
 import { axios_config } from './auth';
 import { API_BASE_URL } from '../constants';
 import axios from 'axios';
 
 export const getLists = (start_today = true) => dispatch => {
+  dispatch({ type: CLEAR_LISTS });
+  dispatch({ type: CLEAR_DAYS });
+  dispatch({ type: CLEAR_ENTRIES });
   dispatch({ type: GET_LISTS });
   axios
     .get(`${API_BASE_URL}/api/lists?start_today=${start_today}`, axios_config)
@@ -41,6 +48,34 @@ export const getList = (list_id, offset = 0, limit = false) => dispatch => {
     });
 };
 
+export const getListThenDaysThenEntries = (
+  list_id,
+  offset = 0,
+  limit = false,
+  suppressLoading = false
+) => dispatch => {
+  let url = `${API_BASE_URL}/api/lists/${list_id}?offset=${offset}`;
+  if (limit) {
+    url += `&limit=${limit}`;
+  }
+  if (!suppressLoading) {
+    dispatch({ type: GET_LIST });
+    dispatch({ type: GET_DAYS });
+    dispatch({ type: GET_ENTRIES });
+  }
+  axios
+    .get(url, axios_config)
+    .then(res => {
+      dispatch({ type: GET_LIST_SUCCESS, payload: res.data });
+      dispatch(
+        getDaysByListThenEntries(list_id, offset, limit, suppressLoading)
+      );
+    })
+    .catch(err => {
+      dispatch(returnErrors(err));
+    });
+};
+
 export const createList = listname => dispatch => {
   const body = {
     listname: listname
@@ -53,8 +88,7 @@ export const createList = listname => dispatch => {
         type: NEW_LIST,
         payload: res.data
       });
-      dispatch(getDaysByList(res.data.id));
-      dispatch(getEntriesByList(res.data.id));
+      dispatch(getDaysByListThenEntries(res.data.id));
     })
     .catch(err => {
       dispatch(returnErrors(err));

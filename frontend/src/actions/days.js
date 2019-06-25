@@ -3,6 +3,7 @@ import { axios_config } from './auth';
 import { API_BASE_URL } from '../constants';
 import axios from 'axios';
 import { GET_DAYS, GET_DAYS_SUCCESS, GET_ALL_DAYS_SUCCESS } from './types';
+import { getEntriesByList } from './entries';
 
 export const getDaysByList = (
   list_id,
@@ -18,6 +19,30 @@ export const getDaysByList = (
     .get(url, axios_config)
     .then(res => {
       dispatch({ type: GET_DAYS_SUCCESS, payload: res.data });
+    })
+    .catch(err => {
+      dispatch(returnErrors(err));
+    });
+};
+
+export const getDaysByListThenEntries = (
+  list_id,
+  offset = 0,
+  limit = false,
+  suppressLoading = false
+) => dispatch => {
+  let url = `${API_BASE_URL}/api/lists/${list_id}/days?offset=${offset}`;
+  if (limit) {
+    url += `&limit=${limit}`;
+  }
+  if (!suppressLoading) {
+    dispatch({ type: GET_DAYS });
+  }
+  axios
+    .get(url, axios_config)
+    .then(res => {
+      dispatch({ type: GET_DAYS_SUCCESS, payload: res.data });
+      dispatch(getEntriesByList(list_id, offset, limit, suppressLoading));
     })
     .catch(err => {
       dispatch(returnErrors(err));

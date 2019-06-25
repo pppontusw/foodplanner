@@ -66,7 +66,7 @@ def get_days_by_list(lid):
   json_obj = [{
       'day': d.day,
       'id': d.id,
-      'entries': [e.id for e in d.get_entries()]
+      'entries': [e.id for e in d.get_or_create_entries()]
   } for d in days]
   return jsonify(json_obj)
 
