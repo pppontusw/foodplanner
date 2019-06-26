@@ -5,6 +5,8 @@ import days from './days';
 import errors from './errors';
 import messages from './messages';
 import entries from './entries';
+import shares from './shares';
+import meals from './meals';
 
 export default combineReducers({
   lists,
@@ -12,5 +14,7 @@ export default combineReducers({
   errors,
   entries,
   messages,
-  auth
+  auth,
+  shares,
+  meals
 });

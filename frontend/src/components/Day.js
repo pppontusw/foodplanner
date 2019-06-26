@@ -3,6 +3,7 @@ import moment from 'moment';
 import { connect } from 'react-redux';
 import Entry from './Entry';
 import { Card } from 'antd';
+import NewEntry from './NewEntry';
 
 class Day extends Component {
   render() {
@@ -18,7 +19,7 @@ class Day extends Component {
           title={moment.utc(day.day).format('MMM Do')}
         >
           {day.entries.map((entry, entry_index) => (
-            <Entry key={entry} entryId={entry} />
+            <NewEntry key={entry} entryId={entry} />
           ))}
         </Card>
       </React.Fragment>

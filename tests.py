@@ -149,7 +149,7 @@ class ListModelCase(unittest.TestCase):
     d = l.get_days()
     e = Entry(day_id=d[0].id)
     ls = ListSettings(list_id=l.id, user_id=a.id)
-    s = ListPermission(list_id=l.id, permission_level='rw', user_id=b.id)
+    s = ListPermission(list_id=l.id, permission_level='member', user_id=b.id)
     db.session.add_all([e, ls, s])
     db.session.commit()
     self.assertEqual(List.query.first(), l)
@@ -191,7 +191,7 @@ class ListModelCase(unittest.TestCase):
     db.session.commit()
     x = push_dummy_list(v, 'x')
     self.assertEqual(x.get_users_with_access(), [v])
-    s = ListPermission(user_id=u.id, list_id=x.id, permission_level='rw')
+    s = ListPermission(user_id=u.id, list_id=x.id, permission_level='member')
     db.session.add(s)
     db.session.commit()
     self.assertEqual(x.get_users_with_access(), [v, u])
@@ -314,11 +314,11 @@ class ListPermissionModelCase(unittest.TestCase):
     a = push_dummy_user('a', 'a')
     b = push_dummy_user('b', 'b')
     l = push_dummy_list(a, 'l')
-    lpm = ListPermission(list_id=l.id, user_id=b.id, permission_level='rw')
+    lpm = ListPermission(list_id=l.id, user_id=b.id, permission_level='member')
     db.session.add(lpm)
     db.session.commit()
     self.assertEqual(
-        lpm.__repr__(), '<ListPermission 2 of List l to User b at level rw>')
+        lpm.__repr__(), '<ListPermission 2 of List l to User b at level member>')
 
 
   def test_get_list(self):
@@ -327,7 +327,7 @@ class ListPermissionModelCase(unittest.TestCase):
     db.session.add(u)
     db.session.commit()
     l = push_dummy_list(u, 'l')
-    s = ListPermission(user_id=v.id, list_id=l.id, permission_level='rw')
+    s = ListPermission(user_id=v.id, list_id=l.id, permission_level='member')
     db.session.add(s)
     db.session.commit()
     self.assertEqual(s.list_, l)
@@ -461,7 +461,7 @@ class MainViewCase(unittest.TestCase):
       self.assertTrue('Xylophone' not in html)
       rsp = self.test_client.get('/list/' + str(x.id))
       self.assertEqual(rsp.status, '302 FOUND')
-    s = ListPermission(user_id=u.id, list_id=x.id, permission_level='rw')
+    s = ListPermission(user_id=u.id, list_id=x.id, permission_level='member')
     db.session.add(s)
     db.session.commit()
     with self.test_client:

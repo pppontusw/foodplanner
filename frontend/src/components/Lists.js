@@ -1,13 +1,11 @@
 import React, { Component, Fragment } from 'react';
-import { Link, Redirect } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { getLists, createList } from '../actions/lists';
-import { getDays } from '../actions/days';
-import { getEntries } from '../actions/entries';
+import { getListsThenDaysThenEntries, createList } from '../actions/lists';
 import _ from 'lodash';
 import Day from './Day';
 import Loader from './Loader';
-import { Modal, Form, Input, Card, Row, Col, Button, Spin } from 'antd';
+import { Modal, Form, Input, Card, Row, Col, Button } from 'antd';
 
 const mapStateToProps = state => {
   const loading =
@@ -29,9 +27,7 @@ export class Lists extends Component {
   };
 
   componentDidMount() {
-    this.props.getLists(0, 2);
-    this.props.getDays(0, 2);
-    this.props.getEntries(0, 2);
+    this.props.getListsThenDaysThenEntries(0, 2);
   }
 
   onSubmit = e => {
@@ -100,7 +96,7 @@ export class Lists extends Component {
         </Row>
         <Row>
           <Button
-            style={{ marginLeft: '10px' }}
+            style={{ margin: '10px' }}
             type="primary"
             onClick={this.createListClick.bind(this)}
           >
@@ -114,5 +110,5 @@ export class Lists extends Component {
 
 export default connect(
   mapStateToProps,
-  { getLists, createList, getDays, getEntries }
+  { getListsThenDaysThenEntries, createList }
 )(Lists);

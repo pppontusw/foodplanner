@@ -28,7 +28,7 @@ export const getEntriesByList = (
       dispatch({ type: GET_ENTRIES_SUCCESS, payload: res.data });
     })
     .catch(err => {
-      dispatch(returnErrors(err));
+      dispatch(returnErrors(err.response.data, err.response.status));
     });
 };
 
@@ -54,7 +54,7 @@ export const getEntries = (
       });
     })
     .catch(err => {
-      dispatch(returnErrors(err));
+      dispatch(returnErrors(err.response.data, err.response.status));
     });
 };
 
@@ -72,6 +72,6 @@ export const updateEntry = (entry_id, text) => dispatch => {
       });
     })
     .catch(err => {
-      dispatch(returnErrors(err));
+      dispatch(returnErrors(err.response.data, err.response.status));
     });
 };

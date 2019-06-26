@@ -18,6 +18,7 @@ def load_user(uid):
 
 
 class User(UserMixin, db.Model):
+  """A foodplanner user"""
   __tablename__ = 'user'
   id = db.Column(db.Integer, primary_key=True)
   username = db.Column(db.String(250), nullable=False)
@@ -74,8 +75,23 @@ class User(UserMixin, db.Model):
     db.session.delete(self)
     db.session.commit()
 
+  def to_dict(self):
+    base = {
+        'id': self.id,
+        'username': self.username
+    }
+    privileged = {
+        'email': self.email,
+        'firstname': self.firstname,
+        'lastname': self.lastname
+    }
+    if self == current_user:
+      return {**base, **privileged}
+    return base
+
 
 class List(db.Model):
+  """A list containst days, settings, and other related items"""
   __tablename__ = 'list'
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(250))
@@ -87,6 +103,14 @@ class List(db.Model):
   users = db.relationship("ListPermission", back_populates='list_')
   days = db.relationship("Day")
   settings = db.relationship("ListSettings")
+  meals = db.relationship("Meal")
+
+  # def __init__(self, **kwargs):
+  #   super(List, self).__init__(**kwargs)
+  #   for i in ["Lunch", "Dinner"]:
+  #     meal = Meal(list_id=kwargs['id'], name=i)
+  #     db.session.add(meal)
+  #     db.session.commit()
 
   def __repr__(self):
     return "<List {}>".format(self.name)
@@ -99,7 +123,7 @@ class List(db.Model):
     return [i.user for i in self.users]
 
   def get_non_owners(self):
-    return [i.user for i in self.users if i.permission_level == 'rw']
+    return [i.user for i in self.users if i.permission_level == 'member']
 
   def get_owners(self):
     return [i.user for i in self.users if i.permission_level == 'owner']
@@ -108,10 +132,11 @@ class List(db.Model):
     now = date.today()
     list_settings = self.get_settings_for_user(current_user)
     days = []
-    days_to_display = list_settings.days_to_display
+    days_to_display = limit if limit else list_settings.days_to_display
     start_day = 0 if start_today else self.get_start_day()
-    end_day = limit if limit else days_to_display
-    for i in range(start_day + (offset * days_to_display), end_day + (offset * days_to_display)):
+    end_day = start_day + days_to_display + (offset * days_to_display)
+    start_day += (offset * days_to_display)
+    for i in range(start_day, end_day):
       delta = timedelta(days=i)
       day = Day.query.filter_by(day=now+delta, list_id=self.id).first()
       if not day:
@@ -161,7 +186,8 @@ class List(db.Model):
             'start_day_of_week': List.get_weekday_from_int(list_settings.start_day_of_week),
             'days_to_display': list_settings.days_to_display
         },
-        'shares': [i.user.username for i in self.users]
+        'shares': [i.id for i in self.users],
+        'is_owner': current_user in self.get_owners()
     }
     return listdict
 
@@ -191,7 +217,54 @@ class List(db.Model):
     return d
 
 
+class Food(db.Model):
+  """A food will be suggested in the autocomplete for entries"""
+  __tablename__ = 'foods'
+  id = db.Column(db.Integer, primary_key=True)
+  list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
+  name = db.Column(db.String(250))
+
+  list_ = db.relationship("List")
+  ingredients = db.relationship("Ingredient")
+
+  def __repr__(self):
+    return "<Food {} of List {}>".format(
+        self.id, self.list_.name
+    )
+
+
+class Meal(db.Model):
+  """This is a meal, there will be one entry per meal per day"""
+  __tablename__ = 'meals'
+  id = db.Column(db.Integer, primary_key=True)
+  list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
+  name = db.Column(db.String(250))
+  order = db.Column(db.Integer)
+
+  list_ = db.relationship("List")
+
+  def __repr__(self):
+    return "<Meal {} of List {}>".format(
+        self.id, self.list_.name
+    )
+
+
+class Ingredient(db.Model):
+  """Foods contain ingredients"""
+  __tablename__ = 'ingredients'
+  id = db.Column(db.Integer, primary_key=True)
+  food_id = db.Column(db.Integer, db.ForeignKey('foods.id'))
+  name = db.Column(db.String(250))
+  food = db.relationship("Food", back_populates='ingredients')
+
+  def __repr__(self):
+    return "<Ingredient {} of Food {}>".format(
+        self.id, self.meal.name
+    )
+
+
 class ListSettings(db.Model):
+  """Defines various settings for how a list is displayed, each user/list combo has one"""
   __tablename__ = 'listsettings'
   id = db.Column(db.Integer, primary_key=True)
   list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
@@ -209,6 +282,7 @@ class ListSettings(db.Model):
 
 
 class Day(db.Model):
+  """A day is one day, has entries"""
   __tablename__ = 'day'
   id = db.Column(db.Integer, primary_key=True)
   list_id = db.Column(db.Integer, db.ForeignKey('list.id'))
@@ -220,7 +294,12 @@ class Day(db.Model):
   def __init__(self, **kwargs):
     super(Day, self).__init__(**kwargs)
     list_ = List.query.filter_by(id=kwargs['list_id']).first()
-    entry_names = list_.entry_names.split(',')
+    if not list_.meals:
+      for idx, i in enumerate(["Lunch", "Dinner"]):
+        meal = Meal(list_id=list_.id, name=i, order=idx)
+        db.session.add(meal)
+        db.session.commit()
+    entry_names = [i.name for i in list_.meals]
     for i in entry_names:
       entry = Entry.query.filter_by(day_id=self.id, key=i).first()
       if not entry:
@@ -232,15 +311,17 @@ class Day(db.Model):
     return "<Day {} of List {}>".format(self.day, self.list_.name)
 
   def get_or_create_entries(self):
-    # TODO change to get_entries_or_create
-    entry_names = self.list_.entry_names.split(',')
+    meals = sorted(self.list_.meals, key=lambda x: x.order)
+    entries = []
+    entry_names = [i.name for i in meals]
     for i in entry_names:
       entry = Entry.query.filter_by(day_id=self.id, key=i).first()
       if not entry:
         entry = Entry(day_id=self.id, key=i, value='')
         db.session.add(entry)
         db.session.commit()
-    return self.entries
+      entries.append(entry)
+    return entries
 
   def to_dict(self):
     return {
@@ -251,6 +332,7 @@ class Day(db.Model):
 
 
 class Entry(db.Model):
+  """One entry in the food planner"""
   __tablename__ = 'entry'
   id = db.Column(db.Integer, primary_key=True)
   day_id = db.Column(db.Integer, db.ForeignKey('day.id'))
@@ -271,6 +353,7 @@ class Entry(db.Model):
 
 
 class ListPermission(db.Model):
+  """Handles permissions for a user to a list"""
   __tablename__ = 'listpermission'
   id = db.Column(db.Integer, primary_key=True)
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -284,3 +367,10 @@ class ListPermission(db.Model):
     return "<ListPermission {} of List {} to User {} at level {}>".format(
         self.id, self.list_.name, self.user.username, self.permission_level
     )
+
+  def to_dict(self):
+    return {
+        'id': self.id,
+        'username': self.user.username,
+        'permission_level': self.permission_level
+    }

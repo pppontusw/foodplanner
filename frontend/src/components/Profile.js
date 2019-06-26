@@ -1,12 +1,10 @@
 import React, { Component } from 'react';
-import { Link, Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
-import { register } from '../actions/auth';
+import { updateUser } from '../actions/auth';
 import { createMessage } from '../actions/messages';
 import { Form, Button, Input } from 'antd';
 
-export class Register extends Component {
+class Profile extends Component {
   state = {
     username: '',
     email: '',
@@ -14,11 +12,6 @@ export class Register extends Component {
     lastname: '',
     password: '',
     password2: ''
-  };
-
-  static propTypes = {
-    register: PropTypes.func.isRequired,
-    isAuthenticated: PropTypes.bool
   };
 
   onSubmit = e => {
@@ -34,23 +27,30 @@ export class Register extends Component {
     if (password !== password2) {
       this.props.createMessage({ passwordNotMatch: 'Passwords do not match' });
     } else {
-      const newUser = {
+      const updatedUser = {
         username,
         firstname,
         lastname,
         password,
         email
       };
-      this.props.register(newUser);
+      this.props.updateUser(this.props.user.id, updatedUser);
     }
   };
 
   onChange = e => this.setState({ [e.target.name]: e.target.value });
 
+  componentDidMount() {
+    const { username, email, firstname, lastname } = this.props.user;
+    this.setState({
+      username,
+      email,
+      firstname,
+      lastname
+    });
+  }
+
   render() {
-    if (this.props.isAuthenticated) {
-      return <Redirect to="/" />;
-    }
     const {
       username,
       email,
@@ -65,7 +65,7 @@ export class Register extends Component {
         layout="horizontal"
         style={{ maxWidth: '800px', margin: '20px auto' }}
       >
-        <h2 className="text-center">Register</h2>
+        <h2 className="text-center">Update user</h2>
         <Form.Item className="form-group">
           <Input
             // prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
@@ -134,20 +134,18 @@ export class Register extends Component {
           <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
             Register
           </Button>
-          <p>
-            Already have an account? <Link to="/login">Login</Link>
-          </p>
         </Form.Item>
       </Form>
     );
   }
 }
 
-const mapStateToProps = state => ({
-  isAuthenticated: state.auth.isAuthenticated
-});
-
 export default connect(
-  mapStateToProps,
-  { register, createMessage }
-)(Register);
+  state => {
+    return {
+      isAuthenticated: state.auth.isAuthenticated,
+      user: state.auth.user
+    };
+  },
+  { updateUser, createMessage }
+)(Profile);

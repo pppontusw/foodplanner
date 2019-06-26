@@ -1,39 +1,47 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { getList } from '../../actions/lists';
-import { Card, Tabs } from 'antd';
+import { getSharesByList } from '../../actions/shares';
+import { Card, Tabs, Icon, Button } from 'antd';
 import ShareSettings from './ShareSettings';
 import ViewSettings from './ViewSettings';
 import MealSettings from './MealSettings';
-import Loader from '../Loader';
 
 export class ListSettings extends Component {
   componentDidMount() {
-    this.props.getList(this.props.match.params.id);
+    const { id } = this.props.match.params;
+    this.props.getList(id);
+    this.props.getSharesByList(id);
   }
 
   render() {
     const { TabPane } = Tabs;
     const list_id = this.props.match.params.id;
 
-    if (this.props.loading) {
-      return <Loader />;
-    }
-
     return (
-      <Card style={{ margin: '10px 10px', maxWidth: '700px' }}>
-        <Tabs tabPosition="right">
-          <TabPane tab="View Settings" key="1">
-            <ViewSettings list_id={list_id} />
-          </TabPane>
-          <TabPane tab="Meals" key="2">
-            <MealSettings list_id={list_id} />
-          </TabPane>
-          <TabPane tab="Shares" key="3">
-            <ShareSettings list_id={list_id} />
-          </TabPane>
-        </Tabs>
-      </Card>
+      <div>
+        <Link to={`/list/${list_id}`}>
+          <Button style={{ margin: '10px 10px 0px 10px' }}>
+            <Icon type="left-circle" /> Back to list
+          </Button>
+        </Link>
+        <Card
+          style={{ margin: '10px 10px', maxWidth: '700px', minHeight: '500px' }}
+        >
+          <Tabs tabPosition="right">
+            <TabPane forceRender={true} tab="View Settings" key="1">
+              <ViewSettings list_id={list_id} />
+            </TabPane>
+            <TabPane forceRender={true} tab="Meals" key="2">
+              <MealSettings list_id={list_id} />
+            </TabPane>
+            <TabPane forceRender={true} tab="Shares" key="3">
+              <ShareSettings list_id={list_id} />
+            </TabPane>
+          </Tabs>
+        </Card>
+      </div>
     );
   }
 }
@@ -47,5 +55,5 @@ export default connect(
       loading: state.lists.loading
     };
   },
-  { getList }
+  { getList, getSharesByList }
 )(ListSettings);

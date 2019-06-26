@@ -3,7 +3,7 @@ import { Link, Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { login } from '../actions/auth';
-import { Form, Button, Icon, Checkbox, Input } from 'antd';
+import { Form, Button, Icon, Input } from 'antd';
 
 export class Login extends Component {
   state = {
@@ -48,6 +48,7 @@ export class Login extends Component {
             prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
             placeholder="Password"
             name="password"
+            type="password"
             onChange={this.onChange}
             value={password}
           />

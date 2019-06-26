@@ -15,13 +15,6 @@ class Entry extends Component {
       return null;
     }
     return (
-      // // <tbody key={entry.id}>
-      //   {/* <tr className="d-flex"> */}
-      //     {/* <td className="col-sm-4 col-3 col-md-6">{entry.key}</td> */}
-      //     {/* <td className="col-sm-8 col-9 col-md-6"> */}
-      //     {/* </td> */}
-      //   {/* </tr> */}
-      // {/* </tbody> */}
       <Row>
         <div style={{ float: 'left' }}>
           <p>{entry.key}</p>

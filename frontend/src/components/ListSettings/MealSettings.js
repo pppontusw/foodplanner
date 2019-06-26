@@ -9,8 +9,10 @@ export class MealSettings extends Component {
 
 export default connect((state, props) => {
   const list = state.lists.byId[props.list_id];
+  const loading = state.lists.loading;
 
   return {
-    list: list
+    list: list,
+    loading
   };
 })(MealSettings);

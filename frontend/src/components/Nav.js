@@ -1,9 +1,7 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { logout } from '../actions/auth';
-import { Menu, Icon } from 'antd';
-
-const { SubMenu } = Menu;
+import { Menu } from 'antd';
 
 export class Nav extends Component {
   render() {
@@ -16,17 +14,13 @@ export class Nav extends Component {
         Logout
       </Menu.Item>,
       <Menu.Item key="profile" style={{ float: 'right' }}>
-        <a href="#/profile" target="_blank" rel="noopener noreferrer">
-          Profile
-        </a>
+        <a href="#/profile">Profile</a>
       </Menu.Item>
     ];
 
     const loggedOutNav = (
       <Menu.Item key="login" style={{ float: 'right' }}>
-        <a href="#/login" target="_blank" rel="noopener noreferrer">
-          Login
-        </a>
+        <a href="#/login">Login</a>
       </Menu.Item>
     );
 

@@ -8,8 +8,6 @@ import {
   GET_LIST_SUCCESS,
   GET_ENTRIES,
   GET_DAYS,
-  CLEAR_DAYS,
-  CLEAR_ENTRIES,
   PUT_LIST_SETTINGS
 } from './types';
 import { getDaysByListThenEntries } from './days';
@@ -17,16 +15,40 @@ import { returnErrors } from './messages';
 import { axios_config } from './auth';
 import { API_BASE_URL } from '../constants';
 import axios from 'axios';
+import { getDaysThenEntries } from './days';
 
 export const getLists = (start_today = true) => dispatch => {
   dispatch({ type: CLEAR_LISTS });
-  dispatch({ type: CLEAR_DAYS });
-  dispatch({ type: CLEAR_ENTRIES });
   dispatch({ type: GET_LISTS });
   axios
     .get(`${API_BASE_URL}/api/lists?start_today=${start_today}`, axios_config)
     .then(res => {
       dispatch({ type: GET_LISTS_SUCCESS, payload: res.data });
+    })
+    .catch(err => {
+      dispatch(returnErrors(err));
+    });
+};
+
+export const getListsThenDaysThenEntries = (
+  offset = 0,
+  limit = false,
+  start_today = true
+) => dispatch => {
+  dispatch({ type: CLEAR_LISTS });
+  dispatch({ type: GET_LISTS });
+  let url = `${API_BASE_URL}/api/lists?offset=${offset}`;
+  if (limit) {
+    url += `&limit=${limit}`;
+  }
+  if (start_today) {
+    url += `&start_today=${start_today}`;
+  }
+  axios
+    .get(url, axios_config)
+    .then(res => {
+      dispatch({ type: GET_LISTS_SUCCESS, payload: res.data });
+      dispatch(getDaysThenEntries(offset, limit, start_today));
     })
     .catch(err => {
       dispatch(returnErrors(err));
@@ -77,19 +99,30 @@ export const getListThenDaysThenEntries = (
     });
 };
 
-export const createList = listname => dispatch => {
+export const createList = (
+  listname,
+  offset = 0,
+  limit = 2,
+  start_today = true
+) => dispatch => {
   const body = {
     listname: listname
   };
 
   axios
-    .post(`${API_BASE_URL}/api/lists`, body, axios_config)
+    .post(
+      `${API_BASE_URL}/api/lists?start_today=${start_today}&limit=${limit}`,
+      body,
+      axios_config
+    )
     .then(res => {
       dispatch({
         type: NEW_LIST,
         payload: res.data
       });
-      dispatch(getDaysByListThenEntries(res.data.id));
+      dispatch(
+        getDaysByListThenEntries(res.data.id, offset, limit, start_today)
+      );
     })
     .catch(err => {
       dispatch(returnErrors(err));

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Form, Select, Button, Icon } from 'antd';
+import { Form, Select, Button, Icon, Card } from 'antd';
 import { putListSettings } from '../../actions/lists';
 
 const { Option } = Select;
@@ -18,13 +18,19 @@ export class ViewSettings extends Component {
   };
 
   render() {
-    const { days_to_display, start_day_of_week } = this.props.settings || {};
+    if (this.props.loading) {
+      return <Card loading={this.props.loading} />;
+    }
+
+    const { days_to_display, start_day_of_week } =
+      this.props.list.settings || {};
     const { getFieldDecorator } = this.props.form;
+
     return (
       <Form onSubmit={this.onSubmit}>
-        <Form.Item label="Number of days to display" hasFeedback>
+        <Form.Item label="Number of days to display">
           {getFieldDecorator('days_to_display', {
-            rules: [{ required: true }],
+            rules: [],
             initialValue: days_to_display
           })(
             <Select>
@@ -36,9 +42,9 @@ export class ViewSettings extends Component {
             </Select>
           )}
         </Form.Item>
-        <Form.Item label="Start day of the week" hasFeedback>
+        <Form.Item label="Start day of the week">
           {getFieldDecorator('start_day_of_week', {
-            rules: [{ required: true }],
+            rules: [],
             initialValue: start_day_of_week
           })(
             <Select>
@@ -70,9 +76,11 @@ const WrappedViewSettingsForm = Form.create({ name: 'view_settings' })(
 export default connect(
   (state, props) => {
     const list = state.lists.byId[props.list_id];
+    const loading = state.lists.loading;
 
     return {
-      settings: list.settings
+      list,
+      loading
     };
   },
   { putListSettings }

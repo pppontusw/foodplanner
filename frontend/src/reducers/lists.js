@@ -7,7 +7,6 @@ import {
   CLEAR_LISTS,
   PUT_LIST_SETTINGS
 } from '../actions/types';
-import produce from 'immer';
 import _ from 'lodash';
 
 const initialState = {

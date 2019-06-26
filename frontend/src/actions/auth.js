@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { returnErrors } from './messages';
+import { returnErrors, createMessage } from './messages';
 import { API_BASE_URL } from '../constants';
 
 import {
@@ -13,7 +13,8 @@ import {
   REGISTER_FAIL,
   CLEAR_LISTS,
   CLEAR_DAYS,
-  CLEAR_ENTRIES
+  CLEAR_ENTRIES,
+  UPDATE_USER_SUCCESS
 } from './types';
 
 export const axios_config = {
@@ -37,6 +38,7 @@ export const loadUser = () => (dispatch, getState) => {
       });
     })
     .catch(err => {
+      console.log(err);
       // dispatch(returnErrors(err.response.data, err.response.status));
       dispatch({
         type: AUTH_ERROR
@@ -86,7 +88,7 @@ export const register = ({
   });
 
   axios
-    .post(`${API_BASE_URL}/api/auth/register`, body, axios_config)
+    .post(`${API_BASE_URL}/api/users`, body, axios_config)
     .then(res => {
       dispatch({
         type: REGISTER_SUCCESS,
@@ -98,6 +100,33 @@ export const register = ({
       dispatch({
         type: REGISTER_FAIL
       });
+    });
+};
+
+export const updateUser = (
+  user_id,
+  { username, firstname, lastname, password, email }
+) => dispatch => {
+  // Request Body
+  const body = JSON.stringify({
+    username,
+    firstname,
+    lastname,
+    email,
+    password
+  });
+
+  axios
+    .put(`${API_BASE_URL}/api/users/${user_id}`, body, axios_config)
+    .then(res => {
+      dispatch({
+        type: UPDATE_USER_SUCCESS,
+        payload: res.data
+      });
+      dispatch(createMessage({ updateUserSuccess: res.data.msg }));
+    })
+    .catch(err => {
+      dispatch(returnErrors(err.response.data, err.response.status));
     });
 };
 
