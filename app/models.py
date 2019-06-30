@@ -334,12 +334,12 @@ class ListSettings(db.Model):
   list_id = db.Column(db.Integer, db.ForeignKey(
       'list.id', ondelete='CASCADE'), nullable=False)
   list_ = db.relationship(
-      "List", backref=db.backref('settings', passive_deletes=True))
+      "List", backref=db.backref('settings', cascade="all", passive_deletes=True))
 
   user_id = db.Column(db.Integer, db.ForeignKey(
       'user.id', ondelete='CASCADE'), nullable=False)
   user = db.relationship(
-      "User", backref=db.backref('listsettings', passive_deletes=True))
+      "User", backref=db.backref('listsettings', cascade="all", passive_deletes=True))
 
   def __repr__(self):
     return "<ListSettings {} of List {} for User {}>".format(
@@ -441,12 +441,12 @@ class ListPermission(db.Model):
   list_id = db.Column(db.Integer, db.ForeignKey(
       'list.id', ondelete='CASCADE'), nullable=False)
   list_ = db.relationship(
-      "List", backref=db.backref('users', passive_deletes=True))
+      "List", backref=db.backref('users', cascade="all", passive_deletes=True))
 
   user_id = db.Column(db.Integer, db.ForeignKey(
       'user.id', ondelete='CASCADE'), nullable=False)
   user = db.relationship(
-      "User", backref=db.backref('lists', passive_deletes=True))
+      "User", backref=db.backref('lists', cascade="all", passive_deletes=True))
 
   def __repr__(self):
     return "<ListPermission {} of List {} to User {} at level {}>".format(

@@ -51,6 +51,22 @@ def get_list(list_id):
   return jsonify([list_.to_dict(args['offset'], args['limit'], args['start_today'])])
 
 
+@bp.route('/lists/<list_id>', methods=['DELETE'])
+@login_required
+@list_owner_required
+@list_access_required
+def delete_list(list_id):
+  args = extract_args(request.args)
+  list_ = List.query.filter_by(id=list_id).first()
+  if list_:
+    db.session.delete(list_)
+    db.session.commit()
+  lists = current_user.get_lists()
+  json_obj = [l.to_dict(args['offset'], args['limit'],
+                        args['start_today']) for l in lists]
+  return jsonify(json_obj)
+
+
 @bp.route('/lists/<list_id>/settings', methods=['PUT'])
 @login_required
 @list_access_required
