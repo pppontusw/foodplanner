@@ -16,7 +16,8 @@ class Day extends Component {
         <Card
           style={{ marginTop: '16px' }}
           type="inner"
-          title={moment.utc(day.day).format('MMM Do')}
+          title={moment.utc(day.day).format('dddd')}
+          extra={moment.utc(day.day).format('MMM Do')}
         >
           {day.entries.map((entry, entry_index) => (
             <NewEntry key={entry} entryId={entry} />
