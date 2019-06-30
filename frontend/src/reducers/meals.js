@@ -5,7 +5,9 @@ import {
   NEW_MEAL_SUCCESS,
   NEW_MEAL,
   DELETE_MEAL,
-  DELETE_MEAL_SUCCESS
+  DELETE_MEAL_SUCCESS,
+  PUT_MEALS_SUCCESS,
+  PUT_MEALS
 } from '../actions/types';
 import _ from 'lodash';
 
@@ -27,7 +29,8 @@ export default function(state = initialState, action) {
   if (
     action.type === GET_MEALS ||
     action.type === NEW_MEAL ||
-    action.type === DELETE_MEAL
+    action.type === DELETE_MEAL ||
+    action.type === PUT_MEALS
   ) {
     return {
       ...state,
@@ -45,7 +48,10 @@ export default function(state = initialState, action) {
       loading: false
     };
   }
-  if (action.type === DELETE_MEAL_SUCCESS) {
+  if (
+    action.type === DELETE_MEAL_SUCCESS ||
+    action.type === PUT_MEALS_SUCCESS
+  ) {
     const mealsById = _.keyBy(action.payload, 'id');
     return {
       ...state,

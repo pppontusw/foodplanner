@@ -32,6 +32,8 @@ export const NEW_MEAL = 'NEW_MEAL';
 export const NEW_MEAL_SUCCESS = 'NEW_MEAL_SUCCESS';
 export const DELETE_MEAL = 'DELETE_MEAL';
 export const DELETE_MEAL_SUCCESS = 'DELETE_MEAL_SUCCESS';
+export const PUT_MEALS = 'PUT_MEALS';
+export const PUT_MEALS_SUCCESS = 'PUT_MEALS_SUCCESS';
 
 // LISTS
 export const NEW_LIST = 'NEW_LIST';

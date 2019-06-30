@@ -6,31 +6,17 @@ import {
   GET_LIST_SETTINGS,
   GET_LISTS_SUCCESS,
   GET_LIST_SUCCESS,
-  GET_ENTRIES,
-  GET_DAYS,
   PUT_LIST_SETTINGS
 } from './types';
-import { getDaysByListThenEntries } from './days';
+import { getDaysByList } from './days';
+import { getEntriesByList } from './entries';
 import { returnErrors } from './messages';
 import { axios_config } from './auth';
 import { API_BASE_URL } from '../constants';
 import axios from 'axios';
 import { getDaysThenEntries } from './days';
 
-export const getLists = (start_today = true) => dispatch => {
-  dispatch({ type: CLEAR_LISTS });
-  dispatch({ type: GET_LISTS });
-  axios
-    .get(`${API_BASE_URL}/api/lists?start_today=${start_today}`, axios_config)
-    .then(res => {
-      dispatch({ type: GET_LISTS_SUCCESS, payload: res.data });
-    })
-    .catch(err => {
-      dispatch(returnErrors(err));
-    });
-};
-
-export const getListsThenDaysThenEntries = (
+export const getLists = (
   offset = 0,
   limit = false,
   start_today = true
@@ -48,30 +34,13 @@ export const getListsThenDaysThenEntries = (
     .get(url, axios_config)
     .then(res => {
       dispatch({ type: GET_LISTS_SUCCESS, payload: res.data });
-      dispatch(getDaysThenEntries(offset, limit, start_today));
     })
     .catch(err => {
       dispatch(returnErrors(err));
     });
 };
 
-export const getList = (list_id, offset = 0, limit = false) => dispatch => {
-  let url = `${API_BASE_URL}/api/lists/${list_id}?offset=${offset}`;
-  if (limit) {
-    url += `&limit=${limit}`;
-  }
-  dispatch({ type: GET_LIST });
-  axios
-    .get(url, axios_config)
-    .then(res => {
-      dispatch({ type: GET_LIST_SUCCESS, payload: res.data });
-    })
-    .catch(err => {
-      dispatch(returnErrors(err));
-    });
-};
-
-export const getListThenDaysThenEntries = (
+export const getList = (
   list_id,
   offset = 0,
   limit = false,
@@ -83,16 +52,11 @@ export const getListThenDaysThenEntries = (
   }
   if (!suppressLoading) {
     dispatch({ type: GET_LIST });
-    dispatch({ type: GET_DAYS });
-    dispatch({ type: GET_ENTRIES });
   }
   axios
     .get(url, axios_config)
     .then(res => {
       dispatch({ type: GET_LIST_SUCCESS, payload: res.data });
-      dispatch(
-        getDaysByListThenEntries(list_id, offset, limit, suppressLoading)
-      );
     })
     .catch(err => {
       dispatch(returnErrors(err));
@@ -120,9 +84,8 @@ export const createList = (
         type: NEW_LIST,
         payload: res.data
       });
-      dispatch(
-        getDaysByListThenEntries(res.data.id, offset, limit, start_today)
-      );
+      dispatch(getDaysByList(res.data.id, offset, limit, start_today));
+      dispatch(getEntriesByList(res.data.id, offset, limit, start_today));
     })
     .catch(err => {
       dispatch(returnErrors(err));

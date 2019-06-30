@@ -64,7 +64,7 @@ export const updateEntry = (entry_id, text) => dispatch => {
   };
 
   axios
-    .put(`${API_BASE_URL}/api/entries/${entry_id}`, body, axios_config)
+    .patch(`${API_BASE_URL}/api/entries/${entry_id}`, body, axios_config)
     .then(res => {
       dispatch({
         type: UPDATE_ENTRY,

@@ -18,20 +18,28 @@ class NewEntry extends Component {
     let value;
     if (this.props.entry) {
       value = this.props.entry.value ? this.props.entry.value : 'Empty';
+    } else {
+      value = 'Empty';
     }
     this.setState({ value, orig_value: value });
   }
 
   saveEntry = () => {
-    this.toggleEdit();
+    this.setState({ editing: false });
     const newValue = this.state.value;
     this.props.updateEntry(this.props.entry.id, newValue);
     this.setState({ orig_value: newValue });
   };
 
+  onSelect = (value, option) => {
+    this.setState({ value: value }, () => {
+      this.saveEntry();
+    });
+  };
+
   revertEntry = () => {
     this.setState({ value: this.state.orig_value });
-    this.toggleEdit();
+    this.setState({ editing: false });
   };
 
   toggleEdit = () => {
@@ -71,29 +79,15 @@ class NewEntry extends Component {
           placeholder="Type food here"
           defaultValue={this.state.value !== 'Empty' ? this.state.value : ''}
           onChange={this.onChange}
-          // onBlur={this.saveEntry}
+          onSelect={this.onSelect}
+          onBlur={() => console.log('got blurd')}
           filterOption={(inputValue, option) =>
             option.props.children
               .toUpperCase()
               .indexOf(inputValue.toUpperCase()) !== -1
           }
         >
-          {/* <Input
-            addonAfter={[
-              <Icon
-                style={{ marginLeft: '20px' }}
-                key={0}
-                type="plus"
-                onClick={this.saveEntry}
-              />,
-              <Icon
-                style={{ marginLeft: '20px' }}
-                key={1}
-                type="delete"
-                onClick={this.revertEntry}
-              />
-            ]}
-          /> */}
+          <Input onPressEnter={this.saveEntry} />
         </AutoComplete>
         <Button
           style={{ marginLeft: '2px' }}
@@ -125,25 +119,6 @@ class NewEntry extends Component {
     );
   }
 }
-
-const baseStyle = {
-  float: 'right',
-  paddingLeft: '20px',
-  paddingRight: '20px',
-  borderStyle: 'hidden',
-  borderWidth: '1px'
-};
-
-const hoverStyle = {
-  ...baseStyle
-  // borderStyle: 'solid',
-  // borderColor: '#999',
-  // borderWidth: '2px'
-};
-
-const noHoverStyle = {
-  ...baseStyle
-};
 
 export default connect(
   (state, props) => {

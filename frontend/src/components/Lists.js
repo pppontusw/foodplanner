@@ -1,7 +1,9 @@
 import React, { Component, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { getListsThenDaysThenEntries, createList } from '../actions/lists';
+import { getLists, createList } from '../actions/lists';
+import { getDays } from '../actions/days';
+import { getEntries } from '../actions/entries';
 import _ from 'lodash';
 import Day from './Day';
 import Loader from './Loader';
@@ -27,7 +29,9 @@ export class Lists extends Component {
   };
 
   componentDidMount() {
-    this.props.getListsThenDaysThenEntries(0, 2);
+    this.props.getLists(0, 2);
+    this.props.getDays(0, 2);
+    this.props.getEntries(0, 2);
   }
 
   onSubmit = e => {
@@ -40,7 +44,6 @@ export class Lists extends Component {
   onChange = e => this.setState({ [e.target.name]: e.target.value });
 
   createListClick = () => {
-    // this.props.openNewListModal()
     this.setState({ newListModalVisible: true });
   };
 
@@ -49,9 +52,6 @@ export class Lists extends Component {
   };
 
   render() {
-    // if (this.props.lists.length === 1) {
-    //   return <Redirect to={`list/${this.props.lists[0].id}`} />
-    // }
     if (this.props.listsLoading) {
       return <Loader />;
     }
@@ -85,7 +85,6 @@ export class Lists extends Component {
                 title={list.name}
                 style={{ margin: '10px 10px' }}
                 extra={<Link to={`/list/${list.id}`}>Go to list</Link>}
-                // className={this.props.lists.length > 1 ? 'col-md-6' : 'col-md-12'}
               >
                 {list.days.map((day, day_index) => (
                   <Day key={day} listId={list.id} dayId={day} />
@@ -110,5 +109,5 @@ export class Lists extends Component {
 
 export default connect(
   mapStateToProps,
-  { getListsThenDaysThenEntries, createList }
+  { getLists, getDays, getEntries, createList }
 )(Lists);

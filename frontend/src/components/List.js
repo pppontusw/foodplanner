@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { getListThenDaysThenEntries } from '../actions/lists';
+import { getList } from '../actions/lists';
+import { getDaysByList } from '../actions/days';
+import { getEntriesByList } from '../actions/entries';
 import { Link } from 'react-router-dom';
 import Day from './Day';
 import { Card, Button, Icon } from 'antd';
@@ -12,14 +14,25 @@ export class List extends Component {
   };
 
   componentDidMount() {
-    this.props.getListThenDaysThenEntries(
-      this.props.match.params.id,
-      this.state.page
-    );
+    this.props.getList(this.props.match.params.id, this.state.page);
+    this.props.getDaysByList(this.props.match.params.id, this.state.page);
+    this.props.getEntriesByList(this.props.match.params.id, this.state.page);
   }
 
   refreshData = suppressLoading => {
-    this.props.getListThenDaysThenEntries(
+    this.props.getList(
+      this.props.match.params.id,
+      this.state.page,
+      false,
+      suppressLoading
+    );
+    this.props.getDaysByList(
+      this.props.match.params.id,
+      this.state.page,
+      false,
+      suppressLoading
+    );
+    this.props.getEntriesByList(
       this.props.match.params.id,
       this.state.page,
       false,
@@ -56,10 +69,6 @@ export class List extends Component {
   render() {
     const { loading, list } = this.props;
 
-    // if (loading) {
-    //   return <Loader />;
-    // }
-
     return (
       <div>
         <Card
@@ -69,18 +78,16 @@ export class List extends Component {
           extra={
             list ? (
               <Link to={`/list_settings/${list.id}`}>
-                <Button
-                // style={{ float: 'right', marginTop: '10px' }}
-                >
+                <Button>
                   <Icon type="setting" />
                 </Button>
               </Link>
             ) : null
           }
         >
-          {list
-            ? list.days.map((day, day_index) => (
-                <Day key={day} listId={list.id} dayId={day} />
+          {this.props.list
+            ? this.props.list.days.map((day, day_index) => (
+                <Day key={day} listId={this.props.list.id} dayId={day} />
               ))
             : null}
 
@@ -115,5 +122,5 @@ export default connect(
       loading: listLoading
     };
   },
-  { getListThenDaysThenEntries }
+  { getList, getDaysByList, getEntriesByList }
 )(List);
