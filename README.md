@@ -23,3 +23,4 @@ note: DATABASE_URL can be left out if you want to use a SQLite database, but thi
 2. Run database migration with `alembic upgrade head`
 
 3. Run the application with `python foodlist.py`, or build it using the Dockerfile.
+
