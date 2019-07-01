@@ -14,9 +14,14 @@ import {
 } from './types';
 import { getList } from './lists';
 
-export const getMealsByList = list_id => dispatch => {
+export const getMealsByList = (
+  list_id,
+  suppressLoading = false
+) => dispatch => {
   let url = `${API_BASE_URL}/api/lists/${list_id}/meals`;
-  dispatch({ type: GET_MEALS });
+  if (!suppressLoading) {
+    dispatch({ type: GET_MEALS });
+  }
   axios
     .get(url, axios_config)
     .then(res => {

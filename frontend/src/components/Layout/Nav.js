@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { logout } from '../actions/auth';
+import { logout } from '../../actions/auth';
 import { Menu } from 'antd';
 
-export class Nav extends Component {
+class Nav extends Component {
   render() {
     const loggedInNav = [
       <Menu.Item

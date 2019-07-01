@@ -6,7 +6,7 @@ import { getDays } from '../actions/days';
 import { getEntries } from '../actions/entries';
 import _ from 'lodash';
 import Day from './Day';
-import Loader from './Loader';
+import Loader from './Helpers/Loader';
 import { Modal, Form, Input, Card, Row, Col, Button } from 'antd';
 
 const mapStateToProps = state => {
@@ -22,7 +22,7 @@ const mapStateToProps = state => {
   };
 };
 
-export class Lists extends Component {
+class Lists extends Component {
   state = {
     newListModalVisible: false,
     listname: ''

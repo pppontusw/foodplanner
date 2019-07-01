@@ -5,14 +5,16 @@ import {
   GET_LIST,
   GET_LIST_SUCCESS,
   CLEAR_LISTS,
-  PUT_LIST_SETTINGS
+  PUT_LIST_SETTINGS,
+  UPDATE_LIST_TITLE
 } from '../actions/types';
 import _ from 'lodash';
 
 const initialState = {
   byId: {},
   firstFullLoad: true,
-  loading: true
+  loading: true,
+  updatingTitle: false
 };
 
 export default function(state = initialState, action) {
@@ -22,6 +24,12 @@ export default function(state = initialState, action) {
       byId: {},
       loading: true,
       firstFullLoad: true
+    };
+  }
+  if (action.type === UPDATE_LIST_TITLE) {
+    return {
+      ...state,
+      updatingTitle: true
     };
   }
   if (action.type === GET_LISTS || action.type === GET_LIST) {
@@ -38,7 +46,8 @@ export default function(state = initialState, action) {
         ...state.byId,
         ...listsById
       },
-      loading: false
+      loading: false,
+      updatingTitle: false
     };
   }
   if (action.type === GET_LISTS_SUCCESS) {

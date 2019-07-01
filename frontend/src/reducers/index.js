@@ -7,6 +7,8 @@ import messages from './messages';
 import entries from './entries';
 import shares from './shares';
 import meals from './meals';
+import foods from './foods';
+import categories from './categories';
 
 export default combineReducers({
   lists,
@@ -16,5 +18,7 @@ export default combineReducers({
   messages,
   auth,
   shares,
-  meals
+  meals,
+  foods,
+  categories
 });

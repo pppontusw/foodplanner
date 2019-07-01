@@ -4,14 +4,14 @@ import React, { Component, Fragment } from 'react';
 import { HashRouter as Router, Route, Switch } from 'react-router-dom';
 
 import Lists from './components/Lists';
-import Alerts from './components/Alerts';
-import Login from './components/Login';
-import Register from './components/Register';
+import Alerts from './components/Helpers/Alerts';
+import Login from './components/Auth/Login';
+import Register from './components/Auth/Register';
 import List from './components/List';
-import Nav from './components/Nav';
-import PrivateRoute from './components/PrivateRoute';
+import Nav from './components/Layout/Nav';
+import PrivateRoute from './components/Helpers/PrivateRoute';
 import ListSettings from './components/ListSettings';
-import Profile from './components/Profile';
+import Profile from './components/Auth/Profile';
 
 import { Provider } from 'react-redux';
 import { store } from './store';

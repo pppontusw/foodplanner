@@ -110,17 +110,13 @@ class List(db.Model):
   # days = db.relationship("Day")
 
   # backref -> ListSettings
-  #settings = db.relationship("ListSettings")
+  # settings = db.relationship("ListSettings")
 
   # backref -> Meal
   # meals = db.relationship("Meal")
 
-  # def __init__(self, **kwargs):
-  #   super(List, self).__init__(**kwargs)
-  #   for i in ["Lunch", "Dinner"]:
-  #     meal = Meal(list_id=kwargs['id'], name=i)
-  #     db.session.add(meal)
-  #     db.session.commit()
+  # backref -> Food
+  # foods
 
   def __repr__(self):
     return "<List {}>".format(self.name)
@@ -174,20 +170,6 @@ class List(db.Model):
       db.session.commit()
     return settings
 
-  # def delete_list(self):
-  #   days = self.days
-  #   for day in days:
-  #     entries = day.entries
-  #     for entry in entries:
-  #       db.session.delete(entry)
-  #     db.session.delete(day)
-  #   for sett in self.settings:
-  #     db.session.delete(sett)
-  #   for userperm in self.users:
-  #     db.session.delete(userperm)
-  #   db.session.delete(self)
-  #   db.session.commit()
-
   def get_or_create_meals(self):
     if not Meal.query.filter_by(list_id=self.id).first():
       for idx, i in enumerate(["Lunch", "Dinner"]):
@@ -198,6 +180,9 @@ class List(db.Model):
         except IntegrityError:
           db.session.rollback()
     return sorted(self.meals, key=lambda x: x.order)
+
+  # def get_food_categories(self):
+  #   return self.categories
 
   def to_dict(self, offset=0, limit=None, start_today=False):
     list_settings = self.get_settings_for_user(current_user)
@@ -214,7 +199,9 @@ class List(db.Model):
         },
         'shares': [i.id for i in self.users],
         'is_owner': current_user in self.get_owners(),
-        'meals': [i.id for i in self.get_or_create_meals()]
+        'meals': [i.id for i in self.get_or_create_meals()],
+        'foods': [i.id for i in self.foods],
+        'categories': [i.id for i in self.categories]
     }
     return listdict
 
@@ -244,6 +231,46 @@ class List(db.Model):
     return d
 
 
+class FoodCategory(db.Model):
+  """
+  Category of a Food
+
+  A food can have many categories and a category can contain many foods
+  """
+  __tablename__ = 'foodcategories'
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(250), nullable=False)
+
+  list_id = db.Column(db.Integer, db.ForeignKey(
+      'list.id', ondelete="CASCADE"), nullable=False)
+  list_ = db.relationship(
+      "List", backref=db.backref('categories', passive_deletes=True))
+
+  def to_dict(self):
+    return {
+        'id': self.id,
+        'name': self.name
+    }
+
+
+class FoodCategoryAssociation(db.Model):
+  """
+  Joins foods and categories
+  """
+  __tablename__ = 'foodcategoryassociation'
+  id = db.Column(db.Integer, primary_key=True)
+
+  food_id = db.Column(db.Integer, db.ForeignKey(
+      'foods.id', ondelete='CASCADE'), nullable=False)
+  foods = db.relationship(
+      "Food", backref=db.backref('categories', cascade="all", passive_deletes=True))
+
+  category_id = db.Column(db.Integer, db.ForeignKey(
+      'foodcategories.id', ondelete='CASCADE'), nullable=False)
+  category = db.relationship(
+      "FoodCategory", backref=db.backref('foods', cascade="all", passive_deletes=True))
+
+
 class Food(db.Model):
   """
   A food will be suggested in the autocomplete for entries
@@ -262,10 +289,20 @@ class Food(db.Model):
   # backref -> Ingredient
   # ingredients = db.relationship("Ingredient")
 
+  # backref -> FoodCategoryAssociation
+  # categories = db.relationship("FoodCategory")
+
   def __repr__(self):
     return "<Food {} of List {}>".format(
         self.id, self.list_.name
     )
+
+  def to_dict(self):
+    return {
+        'id': self.id,
+        'name': self.name,
+        'categories': [i.category.id for i in self.categories]
+    }
 
 
 class Meal(db.Model):

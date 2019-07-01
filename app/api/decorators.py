@@ -19,6 +19,8 @@ def list_access_required(func):
   def decorated_function(*args, **kwargs):
     list_id = kwargs['list_id']
     list_ = List.query.filter_by(id=list_id).first()
+    if not list_:
+      raise APIError(f'No list with id {list_id}', 404)
     if current_user not in list_.get_users_with_access():
       raise APIError('You don\'t have access to this page', 403)
     return func(*args, **kwargs)
@@ -30,6 +32,8 @@ def list_owner_required(func):
   def decorated_function(*args, **kwargs):
     list_id = kwargs['list_id']
     list_ = List.query.filter_by(id=list_id).first()
+    if not list_:
+      raise APIError(f'No list with id {list_id}', 404)
     if current_user not in list_.get_owners():
       raise APIError('Only the list owner can perform this action', 403)
     return func(*args, **kwargs)
@@ -42,6 +46,8 @@ def entry_access_required(func):
     entry_id = kwargs['entry_id']
     entry = Entry.query.filter_by(id=entry_id).first()
     list_ = entry.day.list_
+    if not list_:
+      raise APIError(f'No list with id {list_id}', 404)
     if current_user not in list_.get_users_with_access():
       raise APIError('You don\'t have access to this page', 403)
     return func(*args, **kwargs)

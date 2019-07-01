@@ -3,11 +3,12 @@ import { connect } from 'react-redux';
 import { getList } from '../actions/lists';
 import { getDaysByList } from '../actions/days';
 import { getEntriesByList } from '../actions/entries';
+import { getFoodsByList } from '../actions/foods';
 import { Link } from 'react-router-dom';
 import Day from './Day';
 import { Card, Button, Icon } from 'antd';
 
-export class List extends Component {
+class List extends Component {
   state = {
     page: 0,
     visitedPages: [0]
@@ -17,6 +18,7 @@ export class List extends Component {
     this.props.getList(this.props.match.params.id, this.state.page);
     this.props.getDaysByList(this.props.match.params.id, this.state.page);
     this.props.getEntriesByList(this.props.match.params.id, this.state.page);
+    this.props.getFoodsByList(this.props.match.params.id);
   }
 
   refreshData = suppressLoading => {
@@ -38,6 +40,7 @@ export class List extends Component {
       false,
       suppressLoading
     );
+    this.props.getFoodsByList(this.props.match.params.id);
   };
 
   pageBack = () => {
@@ -122,5 +125,5 @@ export default connect(
       loading: listLoading
     };
   },
-  { getList, getDaysByList, getEntriesByList }
+  { getList, getDaysByList, getEntriesByList, getFoodsByList }
 )(List);

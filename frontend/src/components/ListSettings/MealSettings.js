@@ -1,85 +1,17 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
-import { Icon, Form, Input, Popconfirm, Table } from 'antd';
+import { Icon, Form, Input, Popconfirm, Table, Card } from 'antd';
 import {
   newMeal,
   deleteMeal,
   getMealsByList,
   putMeals
 } from '../../actions/meals';
-import { DndProvider, DragSource, DropTarget } from 'react-dnd';
+import { DndProvider } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 import update from 'immutability-helper';
-let dragingIndex = -1;
-
-class BodyRow extends Component {
-  render() {
-    const {
-      isOver,
-      connectDragSource,
-      connectDropTarget,
-      moveRow,
-      ...restProps
-    } = this.props;
-    const style = { ...restProps.style, cursor: 'move' };
-
-    let { className } = restProps;
-    if (isOver) {
-      if (restProps.index > dragingIndex) {
-        className += ' drop-over-downward';
-      }
-      if (restProps.index < dragingIndex) {
-        className += ' drop-over-upward';
-      }
-    }
-
-    return connectDragSource(
-      connectDropTarget(
-        <tr {...restProps} className={className} style={style} />
-      )
-    );
-  }
-}
-
-const rowSource = {
-  beginDrag(props) {
-    dragingIndex = props.index;
-    return {
-      index: props.index
-    };
-  }
-};
-
-const rowTarget = {
-  drop(props, monitor) {
-    const dragIndex = monitor.getItem().index;
-    const hoverIndex = props.index;
-
-    // Don't replace items with themselves
-    if (dragIndex === hoverIndex) {
-      return;
-    }
-
-    // Time to actually perform the action
-    props.moveRow(dragIndex, hoverIndex);
-
-    // Note: we're mutating the monitor item here!
-    // Generally it's better to avoid mutations,
-    // but it's good here for the sake of performance
-    // to avoid expensive index searches.
-    monitor.getItem().index = hoverIndex;
-  }
-};
-
-const DragableBodyRow = DropTarget('row', rowTarget, (connect, monitor) => ({
-  connectDropTarget: connect.dropTarget(),
-  isOver: monitor.isOver()
-}))(
-  DragSource('row', rowSource, connect => ({
-    connectDragSource: connect.dragSource()
-  }))(BodyRow)
-);
+import { DragableBodyRow } from '../Helpers/BodyRow';
 
 // todo this could be a selector (reselect)
 const mealsMap = (list, meals) => {
@@ -105,7 +37,7 @@ const mealsMap = (list, meals) => {
   return newMeals;
 };
 
-export class MealSettings extends Component {
+class MealSettings extends Component {
   state = {
     new_meal: '',
     data: []
@@ -152,27 +84,30 @@ export class MealSettings extends Component {
       $splice: [[dragIndex, 1], [hoverIndex, 0, dragRow]]
     });
 
-    this.props.putMeals(this.props.list_id, newData);
+    this.props.putMeals(this.props.listId, newData);
   };
 
   onSubmit = e => {
     e.preventDefault();
     const new_meal_name = this.state.new_meal;
-    this.props.newMeal(this.props.list_id, new_meal_name);
+    this.props.newMeal(this.props.listId, new_meal_name);
     this.setState({ new_meal: '' });
   };
 
   onChange = e => this.setState({ [e.target.name]: e.target.value });
 
   deleteMeal = id => {
-    this.props.deleteMeal(this.props.list_id, id);
+    this.props.deleteMeal(this.props.listId, id);
   };
 
   componentDidMount() {
-    this.props.getMealsByList(this.props.list_id);
+    this.props.getMealsByList(this.props.listId);
   }
 
   render() {
+    if (this.props.loading) {
+      return <Card loading={this.props.loading} />;
+    }
     return (
       <div>
         <DndProvider backend={HTML5Backend}>
@@ -208,8 +143,8 @@ export class MealSettings extends Component {
 
 export default connect(
   (state, props) => {
-    const list = state.lists.byId[props.list_id];
-    const loading = state.lists.loading;
+    const list = state.lists.byId[props.listId];
+    const loading = state.meals.loading;
     const mappedMeals = mealsMap(list, state.meals);
 
     return {

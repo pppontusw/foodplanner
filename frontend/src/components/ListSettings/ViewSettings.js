@@ -5,14 +5,14 @@ import { putListSettings } from '../../actions/lists';
 
 const { Option } = Select;
 
-export class ViewSettings extends Component {
+class ViewSettings extends Component {
   onSubmit = e => {
     e.preventDefault();
     this.props.form.validateFields((err, values) => {
       if (!err) {
         const { days_to_display, start_day_of_week } = values;
-        const { list_id } = this.props;
-        this.props.putListSettings(list_id, days_to_display, start_day_of_week);
+        const { listId } = this.props;
+        this.props.putListSettings(listId, days_to_display, start_day_of_week);
       }
     });
   };
@@ -75,7 +75,7 @@ const WrappedViewSettingsForm = Form.create({ name: 'view_settings' })(
 
 export default connect(
   (state, props) => {
-    const list = state.lists.byId[props.list_id];
+    const list = state.lists.byId[props.listId];
     const loading = state.lists.loading;
 
     return {

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { updateUser } from '../actions/auth';
-import { createMessage } from '../actions/messages';
+import { updateUser } from '../../actions/auth';
+import { createMessage } from '../../actions/messages';
 import { Form, Button, Input } from 'antd';
 
 class Profile extends Component {

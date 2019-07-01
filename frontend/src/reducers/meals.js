@@ -26,12 +26,7 @@ export default function(state = initialState, action) {
       firstFullLoad: true
     };
   }
-  if (
-    action.type === GET_MEALS ||
-    action.type === NEW_MEAL ||
-    action.type === DELETE_MEAL ||
-    action.type === PUT_MEALS
-  ) {
+  if (action.type === GET_MEALS) {
     return {
       ...state,
       loading: true

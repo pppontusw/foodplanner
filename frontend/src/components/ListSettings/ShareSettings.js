@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
-import { List, Tag, Icon, Form, Input, Popconfirm } from 'antd';
+import { List, Tag, Icon, Form, Input, Popconfirm, Card } from 'antd';
 import { newShare, deleteShare } from '../../actions/shares';
 
 // todo this could be a selector (reselect)
@@ -28,7 +28,7 @@ const sharesMap = (list, shares) => {
   return newShares;
 };
 
-export class ShareSettings extends Component {
+class ShareSettings extends Component {
   state = {
     new_share: ''
   };
@@ -36,17 +36,20 @@ export class ShareSettings extends Component {
   onSubmit = e => {
     e.preventDefault();
     const new_user = this.state.new_share;
-    this.props.newShare(this.props.list_id, new_user);
+    this.props.newShare(this.props.listId, new_user);
     this.setState({ new_share: '' });
   };
 
   onChange = e => this.setState({ [e.target.name]: e.target.value });
 
   deleteShare = id => {
-    this.props.deleteShare(this.props.list_id, id);
+    this.props.deleteShare(this.props.listId, id);
   };
 
   render() {
+    if (this.props.loading) {
+      return <Card loading={this.props.loading} />;
+    }
     return (
       <div>
         <List
@@ -112,8 +115,8 @@ export class ShareSettings extends Component {
 
 export default connect(
   (state, props) => {
-    const list = state.lists.byId[props.list_id];
-    const loading = state.lists.loading;
+    const list = state.lists.byId[props.listId];
+    const loading = state.shares.loading;
 
     return {
       list: list,

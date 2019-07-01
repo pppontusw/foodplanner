@@ -33,7 +33,7 @@ const openNotificationWithIcon = (type, status, description) => {
   });
 };
 
-export class Alerts extends Component {
+class Alerts extends Component {
   static propTypes = {
     error: PropTypes.object.isRequired,
     message: PropTypes.object.isRequired

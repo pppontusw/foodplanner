@@ -6,7 +6,8 @@ import {
   GET_LIST_SETTINGS,
   GET_LISTS_SUCCESS,
   GET_LIST_SUCCESS,
-  PUT_LIST_SETTINGS
+  PUT_LIST_SETTINGS,
+  UPDATE_LIST_TITLE
 } from './types';
 import { getDaysByList } from './days';
 import { getEntriesByList } from './entries';
@@ -14,7 +15,6 @@ import { returnErrors } from './messages';
 import { axios_config } from './auth';
 import { API_BASE_URL } from '../constants';
 import axios from 'axios';
-import { getDaysThenEntries } from './days';
 
 export const getLists = (
   offset = 0,
@@ -86,6 +86,28 @@ export const createList = (
       });
       dispatch(getDaysByList(res.data.id, offset, limit, start_today));
       dispatch(getEntriesByList(res.data.id, offset, limit, start_today));
+    })
+    .catch(err => {
+      dispatch(returnErrors(err));
+    });
+};
+
+export const renameList = (list_id, listname) => dispatch => {
+  const body = {
+    listname: listname
+  };
+
+  dispatch({
+    type: UPDATE_LIST_TITLE
+  });
+
+  axios
+    .patch(`${API_BASE_URL}/api/lists/${list_id}`, body, axios_config)
+    .then(res => {
+      dispatch({
+        type: GET_LIST_SUCCESS,
+        payload: res.data
+      });
     })
     .catch(err => {
       dispatch(returnErrors(err));
