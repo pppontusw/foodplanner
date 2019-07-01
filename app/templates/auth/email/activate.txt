@@ -1,2 +1,0 @@
-Welcome! Thanks for signing up. Please follow this link to activate your account:
-{{ confirm_url }}

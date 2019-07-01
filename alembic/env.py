@@ -26,7 +26,7 @@ target_metadata = models.db.metadata
 # ... etc.
 basedir = os.path.abspath(os.path.dirname(__file__))
 config.set_main_option('sqlalchemy.url', os.environ.get('DATABASE_URL') or
-                       'sqlite:///' + os.path.join(basedir, 'app.db'))
+                       'sqlite:///' + os.path.join(basedir, '../app.db'))
 
 
 def run_migrations_offline():
