@@ -16,7 +16,13 @@ def not_found_error(error):
   response = jsonify({'msg': 'Not Found'})
   response.status_code = 404
   return response
-  # return render_template('errors/404.html'), 404
+
+
+@bp.app_errorhandler(405)
+def method_not_allowed(error):
+  response = jsonify({'msg': 'Method Not Allowed'})
+  response.status_code = 405
+  return response
 
 
 @bp.app_errorhandler(500)

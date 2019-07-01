@@ -15,6 +15,7 @@ login = LoginManager()
 login.login_view = 'auth.login'
 mail = Mail()
 
+
 def create_app(config_class=Config):
   app = Flask(__name__)
   app.config.from_object(config_class)
@@ -27,14 +28,8 @@ def create_app(config_class=Config):
 
   from app.errors import bp as errors_bp
   app.register_blueprint(errors_bp)
-  from app.auth import bp as auth_bp
-  app.register_blueprint(auth_bp, url_prefix='/auth')
-  from app.admin import bp as admin_bp
-  app.register_blueprint(admin_bp, url_prefix='/admin')
   from app.api import bp as api_bp
   app.register_blueprint(api_bp, url_prefix='/api')
-  from app.main import bp as main_bp
-  app.register_blueprint(main_bp)
   from app import models
 
   if not app.debug and not app.testing:
@@ -51,10 +46,11 @@ def create_app(config_class=Config):
       if app.config['MAIL_USE_TLS']:
         secure = ()
       mail_handler = SMTPHandler(
-                    mailhost=(app.config['MAIL_SERVER'], app.config['MAIL_PORT']),
-                    fromaddr='no-reply@' + app.config['MAIL_SERVER'],
-                    toaddrs=app.config['ADMINS'], subject='{} Frontend Error'.format(app.config['APPLICATION_NAME']),
-                    credentials=auth, secure=secure)
+          mailhost=(app.config['MAIL_SERVER'], app.config['MAIL_PORT']),
+          fromaddr='no-reply@' + app.config['MAIL_SERVER'],
+          toaddrs=app.config['ADMINS'], subject='{} Frontend Error'.format(
+              app.config['APPLICATION_NAME']),
+          credentials=auth, secure=secure)
       mail_handler.setLevel(logging.ERROR)
       app.logger.addHandler(mail_handler)
 
