@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch
 from app import create_app, db
 # from app.auth.token import generate_confirmation_token, confirm_token
-from app.models import User, List, ListPermission, Day, Entry, ListSettings
+from app.models import User, List, ListPermission, Day, Entry, ListSettings, Meal
 from config import Config
 
 
@@ -251,18 +251,10 @@ class DayModelCase(unittest.TestCase):
     c = push_dummy_list(u, 'c')
     day_1 = l.get_or_create_days()[0]
     self.assertTrue(len(day_1.get_or_create_entries()) == 2)
-    l.entry_names = 'Lunch,Dinner,Flop'
+    meal = Meal(name='test', list_id=l.id, order=2)
+    db.session.add(meal)
     db.session.commit()
     self.assertTrue(len(day_1.get_or_create_entries()) == 3)
-    day_2 = c.get_or_create_days()[0]
-    entry_names = c.entry_names.split(',')
-    entries = []
-    for i in entry_names:
-      entry = Entry(day_id=day_2.id, key=i, value='Bookoo')
-      entries.append(entry)
-      db.session.add(entry)
-    db.session.commit()
-    self.assertEqual(day_2.get_or_create_entries(), entries)
 
 
 class EntryModelCase(unittest.TestCase):
