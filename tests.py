@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from time import sleep
 import unittest
 from unittest.mock import patch
 from app import create_app, db
@@ -149,9 +150,9 @@ class ListModelCase(unittest.TestCase):
         l.__repr__(), '<List {}>'.format(l.name)
     )
 
-  # doesn't work with sqlite
-  @unittest.skip
-  def test_delete_list(self):
+  @unittest.skip  # NOT WORKING WITH SQLITE DB
+  @patch.object(List, 'get_settings_for_user', return_value=ListSettings(start_day_of_week=-1, days_to_display=7))
+  def test_delete_list(self, mock_get_settings):
     a = push_dummy_user('a', 'a')
     b = push_dummy_user('b', 'b')
     l = push_dummy_list(a, 'l')
@@ -166,7 +167,8 @@ class ListModelCase(unittest.TestCase):
     self.assertEqual(Day.query.first(), d[0])
     self.assertEqual(ListSettings.query.first(), ls)
     self.assertEqual(ListPermission.query.filter_by(user_id=b.id).first(), s)
-    l.delete_list()
+    db.session.delete(l)
+    db.session.commit()
     self.assertEqual(List.query.first(), None)
     self.assertEqual(Entry.query.first(), None)
     self.assertEqual(Day.query.first(), None)
@@ -237,7 +239,7 @@ class DayModelCase(unittest.TestCase):
     self.app_context.pop()
 
   @patch.object(List, 'get_settings_for_user', return_value=ListSettings(start_day_of_week=-1, days_to_display=7))
-  def test_repr_day(self, mock_get_sett):
+  def test_repr_day(self, mock_get_settings):
     a = push_dummy_user('a', 'a')
     l = push_dummy_list(a, 'l')
     d = l.get_or_create_days()[0]
@@ -270,7 +272,7 @@ class EntryModelCase(unittest.TestCase):
     self.app_context.pop()
 
   @patch.object(List, 'get_settings_for_user', return_value=ListSettings(start_day_of_week=-1, days_to_display=7))
-  def test_repr_entry(self, mock_get_sett):
+  def test_repr_entry(self, mock_get_settings):
     a = push_dummy_user('a', 'a')
     l = push_dummy_list(a, 'l')
     d = l.get_or_create_days()[0]
@@ -281,11 +283,7 @@ class EntryModelCase(unittest.TestCase):
         e.__repr__(), '<Entry 1 of Day {} in List l>'.format(d.day)
     )
 
-
-class ListSettingsModelCase(unittest.TestCase):
-  def setUp(self):
     self.app = create_app(TestConfig)
-    self.app_context = self.app.app_context()
     self.app_context.push()
     db.create_all()
 
