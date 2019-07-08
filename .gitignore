@@ -16,3 +16,5 @@ logs/
 .env*
 alembic-*.ini
 docker-compose*
+.coverage
+htmlcov/

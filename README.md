@@ -1,12 +1,12 @@
 # foodplanner-api
 
-[![Build Status](https://travis-ci.org/pppontusw/foodplanner.svg?branch=master)](https://travis-ci.org/pppontusw/foodplanner)
+[![Build Status](https://travis-ci.org/pppontusw/foodplanner-api.svg?branch=master)](https://travis-ci.org/pppontusw/foodplanner-api)
 
 Flask backend API for the foodplanner application
 
 Environment variables available for configuration:
 
-```
+```env
 MAIL_USERNAME="noreply@yourdomain.com"
 MAIL_PASSWORD="smtp_password"
 MAIL_SERVER="smtp.yourdomain.com"
@@ -24,3 +24,14 @@ note: DATABASE_URL can be left out if you want to use a SQLite database, but thi
 
 3. Run the application with `python foodlist.py`, or build it using the Dockerfile.
 
+## TESTING
+
+### UNIT TESTS
+
+`python -m unittest discover tests/ -v`
+
+### CODE COVERAGE
+
+`coverage run -m unittest discover tests/`
+
+To create a nice html report run `coverage html`

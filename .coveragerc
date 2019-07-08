@@ -1,0 +1,15 @@
+[run]
+branch = True
+source = app
+
+[report]
+exclude_lines =
+    if self.debug:
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    except IntegrityError:
+    if not app.debug and not app.testing:
+ignore_errors = True
+omit =
+    tests/*
