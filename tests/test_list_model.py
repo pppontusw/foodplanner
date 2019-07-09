@@ -140,9 +140,63 @@ class ListModelCase(unittest.TestCase):
             [{'id': 3, 'name': 'Mymeal', 'order': 0}])
 
     def test_get_previous_of_weekday(self):
-        a = 5 - date.today().weekday() if 5 - date.today().weekday() < 0 else 5 - \
-            date.today().weekday() - 7
-        self.assertEqual(List.get_previous_of_weekday(5), a)
+        today = date.today().weekday()
+
+        if today == 0:
+            res_0 = 0
+        elif 0 - today < 0:
+            res_0 = 0 - today
+        else:
+            res_0 = 0 - today - 7
+        self.assertEqual(List.get_previous_of_weekday(0), res_0)
+
+        if today == 1:
+            res_1 = 0
+        elif 1 - today < 0:
+            res_1 = 1 - today
+        else:
+            res_1 = 1 - today - 7
+        self.assertEqual(List.get_previous_of_weekday(1), res_1)
+
+        if today == 2:
+            res_2 = 0
+        elif 2 - today < 0:
+            res_2 = 2 - today
+        else:
+            res_2 = 2 - today - 7
+        self.assertEqual(List.get_previous_of_weekday(2), res_2)
+
+        if today == 3:
+            res_3 = 0
+        elif 3 - today < 0:
+            res_3 = 3 - today
+        else:
+            res_3 = 3 - today - 7
+        self.assertEqual(List.get_previous_of_weekday(3), res_3)
+
+        if today == 4:
+            res_4 = 0
+        elif 4 - today < 0:
+            res_4 = 4 - today
+        else:
+            res_4 = 4 - today - 7
+        self.assertEqual(List.get_previous_of_weekday(4), res_4)
+
+        if today == 5:
+            res_5 = 0
+        elif 5 - today < 0:
+            res_5 = 5 - today
+        else:
+            res_5 = 5 - today - 7
+        self.assertEqual(List.get_previous_of_weekday(5), res_5)
+
+        if today == 6:
+            res_6 = 0
+        elif 6 - today < 0:
+            res_6 = 6 - today
+        else:
+            res_6 = 6 - today - 7
+        self.assertEqual(List.get_previous_of_weekday(6), res_6)
 
     def test_get_weekday_from_int(self):
         self.assertEqual(List.get_weekday_from_int(-1), "Today")

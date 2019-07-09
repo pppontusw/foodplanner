@@ -176,7 +176,7 @@ class APIEntriesCase(unittest.TestCase):
 
     def test_patch_entries(self):
         u = push_dummy_user()
-        list_ = push_dummy_list(u, 'TestyList')
+        push_dummy_list(u, 'TestyList')
 
         with self.test_client:
             self.login(u.username)

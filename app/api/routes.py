@@ -105,20 +105,25 @@ def delete_list(list_id):
 @list_access_required
 def put_list_settings(list_id):
     args = extract_args(request.args)
+
     req = request.get_json()
     if not req:
         raise APIError('application/json is required')
+
     list_ = List.query.filter_by(id=list_id).first()
     settings = list_.get_settings_for_user(current_user)
-    # TODO functionize (start_day_of_week, days_to_display =
-    # extract_from_req(start_day_of_week, days_to_display))
+
     if not 'start_day_of_week' in req:
         raise APIError('start_day_of_week is required')
     if not 'days_to_display' in req:
         raise APIError('days_to_display is required')
+
+    # handle days_to_display
     days_to_display = int(req['days_to_display'])
     if days_to_display < 5 or days_to_display > 21:
         raise APIError('days_to_display needs to be a number between 5-21')
+
+    # handle start_day_of_week
     allowed_days = list(calendar.day_name)
     allowed_days.append("Today")
     start_day_of_week = req['start_day_of_week']
@@ -129,9 +134,12 @@ def put_list_settings(list_id):
         start_day_of_week = -1
     else:
         start_day_of_week = allowed_days.index(start_day_of_week)
+
+    # set and commit
     settings.start_day_of_week = start_day_of_week
     settings.days_to_display = days_to_display
     db.session.commit()
+
     return jsonify([list_.to_dict(args['offset'], args['limit'], args['start_today'])])
 
 
@@ -585,6 +593,8 @@ def register():
         raise APIError('firstname is required')
     if not 'lastname' in req:
         raise APIError('lastname is required')
+    if not 'password' in req:
+        raise APIError('password is required')
     if User.query.filter_by(username=req['username']).first():
         raise APIError('Username already taken')
     if User.query.filter_by(email=req['email']).first():
@@ -614,14 +624,18 @@ def register():
 @login_required
 def delete_user(user_id):
     user_ = User.query.filter_by(id=user_id).first()
-    if user_ and user_ == current_user:
-        db.session.delete(user_)
-        db.session.commit()
+    if not user_:
+        raise APIError(f'No user with id {user_id}', 404)
+    if user_ != current_user:
+        raise APIError('You cannot delete another user', 403)
+    db.session.delete(user_)
+    db.session.commit()
     logout_user()
     return jsonify({'msg': 'User deleted'}), 401
 
 
 @bp.route('/users/<user_id>', methods=['PUT'])
+@login_required
 def put_users(user_id):
     req = request.get_json()
     if not req:
@@ -662,7 +676,7 @@ def put_users(user_id):
     if req['lastname'] != current_user.lastname:
         current_user.lastname = req['lastname']
     db.session.commit()
-    return jsonify({'msg': 'User updated successfully', **current_user.to_dict()}), 201
+    return jsonify({'msg': 'User updated successfully', **current_user.to_dict()}), 200
 
 
 ######################
@@ -677,6 +691,10 @@ def login():
     req = request.get_json()
     if not req:
         raise APIError('application/json is required')
+    if not 'username' in req:
+        raise APIError('username is required')
+    if not 'password' in req:
+        raise APIError('password is required')
     u = User.query.filter_by(username=req['username']).first()
     if u is None or not u.check_password(req['password']):
         raise APIError('Invalid username or password!', 401)
@@ -698,6 +716,8 @@ def logout():
     return jsonify({'msg': 'Logged out successfully'}), 200
 
 
+# This is here for the testing
+# of the flask 500 error handler
 @bp.route('/zerodivision')
 def zerodiv():
     if current_app.config['TESTING_500']:

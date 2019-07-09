@@ -4,14 +4,14 @@ from flask_login import current_user
 from app.models import List, Entry
 from app.api.exceptions import APIError
 
-
-def check_confirmed(func):
-    @wraps(func)
-    def decorated_function(*args, **kwargs):
-        if current_user.is_confirmed is False:
-            return jsonify({'msg': 'You need to confirm your email'}), 403
-        return func(*args, **kwargs)
-    return decorated_function
+# TODO is this needed?
+# def check_confirmed(func):
+#     @wraps(func)
+#     def decorated_function(*args, **kwargs):
+#         if current_user.is_confirmed is False:
+#             raise APIError('You need to confirm your email', 403)
+#         return func(*args, **kwargs)
+#     return decorated_function
 
 
 def list_access_required(func):
