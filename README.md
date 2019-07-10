@@ -1,6 +1,7 @@
 # foodplanner-api
 
 [![Build Status](https://travis-ci.org/pppontusw/foodplanner-api.svg?branch=master)](https://travis-ci.org/pppontusw/foodplanner-api)
+[![codecov](https://codecov.io/gh/pppontusw/foodplanner-api/branch/master/graph/badge.svg)](https://codecov.io/gh/pppontusw/foodplanner-api)
 
 Flask backend API for the foodplanner application
 
