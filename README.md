@@ -17,7 +17,7 @@ SECRET_KEY="randomsecretkey"
 SECURITY_PASSWORD_SALT="randomsalt"
 ```
 
-note: DATABASE_URL can be left out if you want to use a SQLite database, but this isn't recommended.
+note: DATABASE_URL can be left out if you want to use a SQLite database, but this isn't recommended - because we don't support cascading deletes in SQLite so you will end up with orphans in your database when deleting their parents.
 
 1. Install requirements with `pip install -r requirements.txt`
 
