@@ -6,10 +6,6 @@ python:
 services:
   - docker
 
-# decrypt the deploy key
-before_install:
-  - openssl aes-256-cbc -k "$ENCRYPTION_KEY" -in deploy_key.enc -out deploy_key -d
-
 # command to install dependencies
 install:
   - 'pip install -r requirements.txt'
@@ -19,7 +15,6 @@ install:
 script:
   - coverage run -m unittest discover tests/ -v
   - codecov
-  - ls
 
 # TODO only deploy if this is from master
 deploy:
@@ -27,6 +22,5 @@ deploy:
   skip_cleanup: true
   script:
     - './docker_push'
-    - chmod 600 deploy_key && ssh -o StrictHostKeyChecking=no -i deploy_key pontus@api.myfoodplan.app ./deploy_foodplanner.sh
   on:
     all_branches: true
