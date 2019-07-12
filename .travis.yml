@@ -26,7 +26,7 @@ deploy:
   provider: script
   skip_cleanup: true
   script:
-    - bash docker_push
+    - './docker_push'
     - chmod 600 deploy_key && ssh -o StrictHostKeyChecking=no -i deploy_key pontus@api.myfoodplan.app ./deploy_foodplanner.sh
   on:
     all_branches: true
