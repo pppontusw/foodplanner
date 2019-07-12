@@ -1,23 +1,13 @@
 from datetime import date, timedelta
 import unittest
 from unittest.mock import patch
-from app import create_app, db
+from app import db
 from app.models import (List, ListPermission, ListSettings,
                         Entry, User, Day, Meal)
-from helpers import push_dummy_user, push_dummy_list, TestConfig
+from helpers import push_dummy_user, push_dummy_list, AppModelCase
 
 
-class ListModelCase(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app(TestConfig)
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
+class ListModelCase(AppModelCase):
 
     def test_repr_list(self):
         a = push_dummy_user('a', 'a')

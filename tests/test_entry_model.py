@@ -1,22 +1,10 @@
-import unittest
 from unittest.mock import patch
-from app import create_app, db
+from app import db
 from app.models import List, ListSettings, Entry
-from helpers import push_dummy_user, push_dummy_list, TestConfig
+from helpers import push_dummy_user, push_dummy_list, AppModelCase
 
 
-class EntryModelCase(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app(TestConfig)
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
-
+class EntryModelCase(AppModelCase):
     @patch.object(List, 'get_settings_for_user')
     def test_repr_entry(self, mock_get_settings):
         mock_get_settings.return_value = ListSettings(
