@@ -29,8 +29,7 @@ class User(UserMixin, db.Model):
     is_confirmed = db.Column(db.Boolean)
     is_admin = db.Column(db.Boolean, default=False)
 
-    # backref ->
-    # lists = db.relationship("ListPermission", back_populates='user')
+    # backref -> lists
 
     def __repr__(self):
         return "<User {}>".format(self.email)
@@ -85,20 +84,15 @@ class List(db.Model):
     apikey = db.Column(db.String(250))
     last_updated = db.Column(db.DateTime)
 
-    # backref -> ListPermission
-    # users = db.relationship("ListPermission", back_populates='list_')
+    # backref users -> ListPermission (assoc table)
 
-    # backref -> Day
-    # days = db.relationship("Day")
+    # backref days -> Day
 
-    # backref -> ListSettings
-    # settings = db.relationship("ListSettings")
+    # backref settings -> ListSettings
 
-    # backref -> Meal
-    # meals = db.relationship("Meal")
+    # backref meals -> Meal
 
-    # backref -> Food
-    # foods
+    # backref foods -> Food
 
     def __repr__(self):
         return "<List {}>".format(self.name)
@@ -163,9 +157,6 @@ class List(db.Model):
                 except IntegrityError:
                     db.session.rollback()
         return sorted(self.meals, key=lambda x: x.order)
-
-    # def get_food_categories(self):
-    #   return self.categories
 
     def to_dict(self, offset=0, limit=None, start_today=False):
         list_settings = self.get_settings_for_user(current_user)
@@ -274,11 +265,9 @@ class Food(db.Model):
     list_ = db.relationship(
         "List", backref=db.backref('foods', passive_deletes=True))
 
-    # backref -> Ingredient
-    # ingredients = db.relationship("Ingredient")
+    # backref ingredients -> Ingredient
 
-    # backref -> FoodCategoryAssociation
-    # categories = db.relationship("FoodCategory")
+    # backref categories -> FoodCategoryAssociation
 
     def __repr__(self):
         return "<Food {} of List {}>".format(
@@ -310,7 +299,8 @@ class Meal(db.Model):
         'list.id', ondelete="CASCADE"), nullable=False)
     list_ = db.relationship(
         "List", backref=db.backref('meals', passive_deletes=True))
-    # entries = db.relationship("Entry", backref='meal', passive_deletes=True)
+
+    # backref entries -> Entry
 
     def __repr__(self):
         return "<Meal {} of List {}>".format(
