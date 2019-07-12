@@ -1,20 +1,9 @@
-import unittest
-from app import create_app, db
+from app import db
 from app.models import Food, Ingredient
-from helpers import push_dummy_user, push_dummy_list, TestConfig
+from helpers import push_dummy_user, push_dummy_list, AppModelCase
 
 
-class IngredientModelCase(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app(TestConfig)
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
+class IngredientModelCase(AppModelCase):
 
     def test_ingredient_repr(self):
         u = push_dummy_user()

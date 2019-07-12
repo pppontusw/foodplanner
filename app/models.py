@@ -426,7 +426,6 @@ class Entry(db.Model):
     day = db.relationship('Day', backref=db.backref(
         'entries', passive_deletes=True))
 
-    # TODO create this delete cascade relationship in many more places
     meal_id = db.Column(db.Integer, db.ForeignKey(
         'meals.id', ondelete='CASCADE'))
     meal = db.relationship(

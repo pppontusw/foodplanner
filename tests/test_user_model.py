@@ -1,30 +1,16 @@
-from datetime import date, timedelta
 import unittest
 from unittest.mock import patch
-from app import create_app, db
+from app import db
 from app.models import (User, List,
                         ListPermission, Day,
-                        Entry, ListSettings, Meal,
-                        FoodCategory, Food, Ingredient,
-                        FoodCategoryAssociation)
-from config import Config
-from helpers import (push_dummy_admin,
-                     push_dummy_user,
-                     push_dummy_list,
-                     TestConfig)
+                        Entry, ListSettings)
+from helpers import (
+    push_dummy_user,
+    push_dummy_list,
+    AppModelCase)
 
 
-class UserModelCase(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app(TestConfig)
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
+class UserModelCase(AppModelCase):
 
     def test_repr_user(self):
         a = push_dummy_user('a', 'a')

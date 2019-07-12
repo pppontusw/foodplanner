@@ -1,6 +1,43 @@
-from app import db
+import unittest
+from app import db, create_app
 from app.models import User, List, ListPermission
 from config import Config
+
+
+class APITestCase(unittest.TestCase):
+    def setUp(self):
+        self.app = create_app(TestConfig)
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        self.test_client = self.app.test_client()
+        db.create_all()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        self.app_context.pop()
+
+    def login(self, username, password='Test1234'):
+        return self.test_client.post('/api/auth/login', json={
+            'username': username,
+            'password': password
+        })
+
+    def logout(self):
+        return self.test_client.get('/api/auth/logout', follow_redirects=True)
+
+
+class AppModelCase(unittest.TestCase):
+    def setUp(self):
+        self.app = create_app(TestConfig)
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        db.create_all()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        self.app_context.pop()
 
 
 def push_dummy_user(email='doodle@doodlydoo.com', username='doodle'):

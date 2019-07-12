@@ -1,33 +1,11 @@
-import unittest
-from app import create_app, db
+from app import db
 from app.models import User
 from helpers import (push_dummy_user,
                      push_dummy_list,
-                     TestConfig)
+                     APITestCase)
 
 
-class APIUsersCase(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app(TestConfig)
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        self.test_client = self.app.test_client()
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
-
-    def login(self, username, password='Test1234'):
-        return self.test_client.post('/api/auth/login', json={
-            'username': username,
-            'password': password
-        })
-
-    def logout(self):
-        return self.test_client.get('/api/auth/logout', follow_redirects=True)
-
+class APIUsersCase(APITestCase):
     def test_get_users(self):
         user_1 = 'test1'
         user_2 = 'test2'
