@@ -1,0 +1,14 @@
+#!/bin/bash
+echo "Logging in to docker hub"
+echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+echo "Building docker image"
+docker build . -t pontusw/foodplanner-api:latest
+echo "Pushing docker image"
+docker push pontusw/foodplanner-api:latest
+echo "Decrypt the deploy ssh key"
+openssl aes-256-cbc -k "$ENCRYPTION_KEY" -in deploy_key.enc -out deploy_key -d
+echo "Setting deploy_key permissions"
+chmod 600 ./deploy_key
+echo "Triggering deployment of the application"
+ssh -o StrictHostKeyChecking=no -i deploy_key pontus@api.myfoodplan.app ./deploy_foodplanner.sh
+echo "Deployment completed"

@@ -24,8 +24,7 @@ def create_app(config_class=Config):
     login.init_app(app)
     mail.init_app(app)
     bootstrap.init_app(app)
-    CORS(app, resources={r"/api/*": {"origins": "*"}},
-         supports_credentials=True)
+    CORS(app, supports_credentials=True)
 
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)

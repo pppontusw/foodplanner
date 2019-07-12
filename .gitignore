@@ -18,3 +18,4 @@ alembic-*.ini
 docker-compose*
 .coverage
 htmlcov/
+deploy_key
