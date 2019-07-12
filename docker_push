@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+docker build . -t pontusw/foodplanner-api:latest
+docker push pontusw/foodplanner-api:latest
