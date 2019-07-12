@@ -530,6 +530,16 @@ def post_meals(list_id):
     return jsonify(json_obj), 201
 
 
+def verify_meals(req, meals):
+    for meal in req:
+        if 'id' in meal:
+            if not meal['id'] in [i.id for i in meals]:
+                raise APIError(
+                    'ID assignment not allowed, only include pre-existing IDs')
+            if not 'name' in meal:
+                raise APIError(f'No name received in {meal}')
+
+
 @bp.route('/lists/<list_id>/meals', methods=['PUT'])
 @login_required
 @list_access_required
@@ -542,13 +552,7 @@ def put_meals(list_id):
     list_ = List.query.filter_by(id=list_id).first()
     meals = Meal.query.filter_by(list_id=list_.id).all()
     # verify integrity of received list
-    for meal in req:
-        if 'id' in meal:
-            if not meal['id'] in [i.id for i in meals]:
-                raise APIError(
-                    'ID assignment not allowed, only include pre-existing IDs')
-            if not 'name' in meal:
-                raise APIError(f'No name received in {meal}')
+    verify_meals(req, meals)
     for meal in meals:
         if meal.id not in [i['id'] for i in req if 'id' in i]:
             db.session.delete(meal)
@@ -580,11 +584,7 @@ def get_users():
     return jsonify(users), 200
 
 
-@bp.route('/users', methods=['POST'])
-def register():
-    req = request.get_json()
-    if not req:
-        raise APIError('application/json is required')
+def verify_mandatory_user_fields(req):
     if not 'username' in req:
         raise APIError('username is required')
     if not 'email' in req:
@@ -593,6 +593,14 @@ def register():
         raise APIError('firstname is required')
     if not 'lastname' in req:
         raise APIError('lastname is required')
+
+
+@bp.route('/users', methods=['POST'])
+def register():
+    req = request.get_json()
+    if not req:
+        raise APIError('application/json is required')
+    verify_mandatory_user_fields(req)
     if not 'password' in req:
         raise APIError('password is required')
     if User.query.filter_by(username=req['username']).first():
@@ -645,14 +653,7 @@ def put_users(user_id):
         raise APIError(f'User with id {user_id} not found', 404)
     if not user_ == current_user:
         raise APIError('Insufficient permissions', 403)
-    if not 'username' in req:
-        raise APIError('username is required')
-    if not 'email' in req:
-        raise APIError('email is required')
-    if not 'firstname' in req:
-        raise APIError('firstname is required')
-    if not 'lastname' in req:
-        raise APIError('lastname is required')
+    verify_mandatory_user_fields(req)
     if 'password' in req and req['password'] != '':
         if len(req['password']) < 8:
             raise APIError(
@@ -671,10 +672,8 @@ def put_users(user_id):
     # token = generate_confirmation_token(u.email)
     # confirm_url = url_for('auth.confirm_email', token=token, _external=True)
     # send_user_confirmation_email(u, confirm_url)
-    if req['firstname'] != current_user.firstname:
-        current_user.firstname = req['firstname']
-    if req['lastname'] != current_user.lastname:
-        current_user.lastname = req['lastname']
+    current_user.firstname = req['firstname']
+    current_user.lastname = req['lastname']
     db.session.commit()
     return jsonify({'msg': 'User updated successfully', **current_user.to_dict()}), 200
 
