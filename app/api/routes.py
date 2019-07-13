@@ -419,9 +419,10 @@ def put_food(list_id, food_id):
                 category_id=category.id, food_id=food.id)
             db.session.add(fca)
     for category in categories_to_disassociate:
-        fca = FoodCategoryAssociation.query.filter_by(
-            category_id=category.id, food_id=food.id).first()
-        db.session.delete(fca)
+        if category in [i.category for i in food.categories]:
+            fca = FoodCategoryAssociation.query.filter_by(
+                category_id=category.id, food_id=food.id).first()
+            db.session.delete(fca)
     db.session.commit()
     json_obj = [food.to_dict() for food in list_.foods]
     return jsonify(json_obj)

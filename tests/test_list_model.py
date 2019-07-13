@@ -166,7 +166,7 @@ class ListModelCase(AppModelCase):
                          user_id=u.id, start_day_of_week=5)
         db.session.add_all([a, b])
         db.session.commit()
-        c = 5 - date.today().weekday() if 5 - date.today().weekday() < 0 else 5 - \
+        c = 5 - date.today().weekday() if 5 - date.today().weekday() <= 0 else 5 - \
             date.today().weekday() - 7
         self.assertEqual(list_with_minus_one.get_start_day(), 0)
         self.assertEqual(list_with_five.get_start_day(), c)

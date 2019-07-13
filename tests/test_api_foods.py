@@ -154,6 +154,22 @@ class APIFoodCase(APITestCase):
             }])
 
             rsp = self.test_client.put('/api/lists/1/foods/1', json=dict(
+                name='UpdatedFood',
+                categories=[
+                    'Cat',
+                    'NewCat',
+                    'NewestCat'
+                ]
+            ))
+            data = rsp.get_json()
+            self.assertEqual(rsp.status, '200 OK')
+            self.assertEqual(data, [{
+                'id': 1,
+                'name': 'UpdatedFood',
+                'categories': [1, 4, 5]
+            }])
+
+            rsp = self.test_client.put('/api/lists/1/foods/1', json=dict(
                 name='UpdatedFood'
             ))
             self.assertEqual(rsp.status, '400 BAD REQUEST')
