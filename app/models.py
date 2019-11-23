@@ -4,8 +4,6 @@ from os import urandom
 from binascii import b2a_hex
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, current_user
-from itsdangerous import (TimedJSONWebSignatureSerializer
-                          as Serializer, BadSignature, SignatureExpired)
 import jwt
 from sqlalchemy.exc import IntegrityError
 from flask import current_app
@@ -19,7 +17,8 @@ def load_user(uid):
 
 class User(UserMixin, db.Model):
     """A foodplanner user"""
-    __tablename__ = 'user'
+
+    __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(250), nullable=False)
     email = db.Column(db.String(250), nullable=False)
@@ -42,15 +41,19 @@ class User(UserMixin, db.Model):
 
     def get_reset_password_token(self, expires_in=600):
         return jwt.encode(
-            {'reset_password': self.id, 'exp': time() + expires_in},
-            current_app.config['SECRET_KEY'], algorithm='HS256').decode('utf-8')
+            {"reset_password": self.id, "exp": time() + expires_in},
+            current_app.config["SECRET_KEY"],
+            algorithm="HS256",
+        ).decode("utf-8")
 
     @staticmethod
     def verify_reset_password_token(token):
         try:
-            uid = jwt.decode(token, current_app.config['SECRET_KEY'],
-                             algorithms=['HS256'])['reset_password']
-        except jwt.PyJWTError:  # any exception in this method should result in failure
+            uid = jwt.decode(
+                token, current_app.config["SECRET_KEY"], algorithms=["HS256"]
+            )["reset_password"]
+        except jwt.PyJWTError:
+            # any exception in this method should result in failure
             return
         return User.query.get(uid)
 
@@ -58,14 +61,11 @@ class User(UserMixin, db.Model):
         return [i.list_ for i in self.lists]
 
     def to_dict(self):
-        base = {
-            'id': self.id,
-            'username': self.username
-        }
+        base = {"id": self.id, "username": self.username}
         privileged = {
-            'email': self.email,
-            'firstname': self.firstname,
-            'lastname': self.lastname
+            "email": self.email,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
         }
         if self == current_user:
             return {**base, **privileged}
@@ -78,7 +78,8 @@ class List(db.Model):
 
     Takes name (apikey, last_updated)
     """
-    __tablename__ = 'list'
+
+    __tablename__ = "list"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     apikey = db.Column(db.String(250))
@@ -98,17 +99,17 @@ class List(db.Model):
         return "<List {}>".format(self.name)
 
     def generate_api_key(self):
-        self.apikey = str(b2a_hex(urandom(16)), 'utf-8')
+        self.apikey = str(b2a_hex(urandom(16)), "utf-8")
         return self.apikey
 
     def get_users_with_access(self):
         return [i.user for i in self.users]
 
     def get_non_owners(self):
-        return [i.user for i in self.users if i.permission_level == 'member']
+        return [i.user for i in self.users if i.permission_level == "member"]
 
     def get_owners(self):
-        return [i.user for i in self.users if i.permission_level == 'owner']
+        return [i.user for i in self.users if i.permission_level == "owner"]
 
     def get_or_create_days(self, offset=0, limit=None, start_today=False):
         now = date.today()
@@ -117,12 +118,12 @@ class List(db.Model):
         days_to_display = limit if limit else list_settings.days_to_display
         start_day = 0 if start_today else self.get_start_day()
         end_day = start_day + days_to_display + (offset * days_to_display)
-        start_day += (offset * days_to_display)
+        start_day += offset * days_to_display
         for i in range(start_day, end_day):
             delta = timedelta(days=i)
-            day = Day.query.filter_by(day=now+delta, list_id=self.id).first()
+            day = Day.query.filter_by(day=now + delta, list_id=self.id).first()
             if not day:
-                day = Day(list_id=self.id, day=now+delta)
+                day = Day(list_id=self.id, day=now + delta)
                 try:
                     db.session.add(day)
                     db.session.commit()
@@ -130,18 +131,18 @@ class List(db.Model):
                     db.session.rollback()
                     # IT'S BEEN CREATED
                     day = Day.query.filter_by(
-                        day=now+delta, list_id=self.id).first()
+                        day=now + delta, list_id=self.id
+                    ).first()
             days.append(day)
         return days
 
     def get_settings_for_user(self, user):
         settings = ListSettings.query.filter_by(
-            list_id=self.id, user_id=user.id).first()
+            list_id=self.id, user_id=user.id
+        ).first()
         if not settings:
             settings = ListSettings(
-                list_id=self.id,
-                user_id=user.id,
-                start_day_of_week=-1
+                list_id=self.id, user_id=user.id, start_day_of_week=-1
             )
             db.session.add(settings)
             db.session.commit()
@@ -162,20 +163,20 @@ class List(db.Model):
         list_settings = self.get_settings_for_user(current_user)
         days = self.get_or_create_days(offset, limit, start_today)
         listdict = {
-            'name': self.name,
-            'id': self.id,
-            'days': [
-                d.id for d in days
-            ],
-            'settings': {
-                'start_day_of_week': List.get_weekday_from_int(list_settings.start_day_of_week),
-                'days_to_display': list_settings.days_to_display
+            "name": self.name,
+            "id": self.id,
+            "days": [d.id for d in days],
+            "settings": {
+                "start_day_of_week": List.get_weekday_from_int(
+                    list_settings.start_day_of_week
+                ),
+                "days_to_display": list_settings.days_to_display,
             },
-            'shares': [i.id for i in self.users],
-            'is_owner': current_user in self.get_owners(),
-            'meals': [i.id for i in self.get_or_create_meals()],
-            'foods': [i.id for i in self.foods],
-            'categories': [i.id for i in self.categories]
+            "shares": [i.id for i in self.users],
+            "is_owner": current_user in self.get_owners(),
+            "meals": [i.id for i in self.get_or_create_meals()],
+            "foods": [i.id for i in self.foods],
+            "categories": [i.id for i in self.categories],
         }
         return listdict
 
@@ -190,10 +191,17 @@ class List(db.Model):
     def get_weekday_from_int(int_):
         if int_ == -1:
             return "Today"
-        if (int_ < 0 or int_ > 6):
+        if int_ < 0 or int_ > 6:
             raise ValueError("This integer cannot represent a weekday")
-        days = ["Monday", "Tuesday", "Wednesday",
-                "Thursday", "Friday", "Saturday", "Sunday"]
+        days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
         return days[int_]
 
     def get_start_day(self):
@@ -211,14 +219,19 @@ class FoodCategory(db.Model):
 
     A food can have many categories and a category can contain many foods
     """
-    __tablename__ = 'foodcategories'
+
+    __tablename__ = "foodcategories"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
 
-    list_id = db.Column(db.Integer, db.ForeignKey(
-        'list.id', ondelete="CASCADE"), nullable=False)
+    list_id = db.Column(
+        db.Integer,
+        db.ForeignKey("list.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     list_ = db.relationship(
-        "List", backref=db.backref('categories', passive_deletes=True))
+        "List", backref=db.backref("categories", passive_deletes=True)
+    )
 
     def __repr__(self):
         return "<FoodCategory {} of List {}>".format(
@@ -226,28 +239,36 @@ class FoodCategory(db.Model):
         )
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name
-        }
+        return {"id": self.id, "name": self.name}
 
 
 class FoodCategoryAssociation(db.Model):
     """
     Joins foods and categories
     """
-    __tablename__ = 'foodcategoryassociation'
+
+    __tablename__ = "foodcategoryassociation"
     id = db.Column(db.Integer, primary_key=True)
 
-    food_id = db.Column(db.Integer, db.ForeignKey(
-        'foods.id', ondelete='CASCADE'), nullable=False)
+    food_id = db.Column(
+        db.Integer,
+        db.ForeignKey("foods.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     foods = db.relationship(
-        "Food", backref=db.backref('categories', cascade="all", passive_deletes=True))
+        "Food",
+        backref=db.backref("categories", cascade="all", passive_deletes=True),
+    )
 
-    category_id = db.Column(db.Integer, db.ForeignKey(
-        'foodcategories.id', ondelete='CASCADE'), nullable=False)
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey("foodcategories.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     category = db.relationship(
-        "FoodCategory", backref=db.backref('foods', cascade="all", passive_deletes=True))
+        "FoodCategory",
+        backref=db.backref("foods", cascade="all", passive_deletes=True),
+    )
 
 
 class Food(db.Model):
@@ -256,29 +277,32 @@ class Food(db.Model):
 
     Takes list_id and name
     """
-    __tablename__ = 'foods'
+
+    __tablename__ = "foods"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
 
-    list_id = db.Column(db.Integer, db.ForeignKey(
-        'list.id', ondelete="CASCADE"), nullable=False)
+    list_id = db.Column(
+        db.Integer,
+        db.ForeignKey("list.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     list_ = db.relationship(
-        "List", backref=db.backref('foods', passive_deletes=True))
+        "List", backref=db.backref("foods", passive_deletes=True)
+    )
 
     # backref ingredients -> Ingredient
 
     # backref categories -> FoodCategoryAssociation
 
     def __repr__(self):
-        return "<Food {} of List {}>".format(
-            self.name, self.list_.name
-        )
+        return "<Food {} of List {}>".format(self.name, self.list_.name)
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'name': self.name,
-            'categories': [i.category.id for i in self.categories]
+            "id": self.id,
+            "name": self.name,
+            "categories": [i.category.id for i in self.categories],
         }
 
 
@@ -288,30 +312,30 @@ class Meal(db.Model):
 
     Takes list_id, name and order
     """
-    __tablename__ = 'meals'
+
+    __tablename__ = "meals"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     order = db.Column(db.Integer, nullable=False)
 
-    __table_args__ = (db.UniqueConstraint('list_id', 'name'),)
+    __table_args__ = (db.UniqueConstraint("list_id", "name"),)
 
-    list_id = db.Column(db.Integer, db.ForeignKey(
-        'list.id', ondelete="CASCADE"), nullable=False)
+    list_id = db.Column(
+        db.Integer,
+        db.ForeignKey("list.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     list_ = db.relationship(
-        "List", backref=db.backref('meals', passive_deletes=True))
+        "List", backref=db.backref("meals", passive_deletes=True)
+    )
 
     # backref entries -> Entry
 
     def __repr__(self):
-        return "<Meal {} of List {}>".format(
-            self.name, self.list_.name
-        )
+        return "<Meal {} of List {}>".format(self.name, self.list_.name)
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name
-        }
+        return {"id": self.id, "name": self.name}
 
 
 class Ingredient(db.Model):
@@ -320,41 +344,56 @@ class Ingredient(db.Model):
 
     Takes food_id and name
     """
-    __tablename__ = 'ingredients'
+
+    __tablename__ = "ingredients"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250))
 
-    food_id = db.Column(db.Integer, db.ForeignKey(
-        'foods.id', ondelete="CASCADE"))
-    food = db.relationship("Food", backref=db.backref(
-        'ingredients', passive_deletes=True))
+    food_id = db.Column(
+        db.Integer, db.ForeignKey("foods.id", ondelete="CASCADE")
+    )
+    food = db.relationship(
+        "Food", backref=db.backref("ingredients", passive_deletes=True)
+    )
 
     def __repr__(self):
-        return "<Ingredient {} of Food {}>".format(
-            self.name, self.food.name
-        )
+        return "<Ingredient {} of Food {}>".format(self.name, self.food.name)
 
 
 class ListSettings(db.Model):
     """
-    Defines various settings for how a list is displayed, each user/list combo has one
+    Defines various settings for how a list is displayed,
+    each user/list combo has one
 
     takes list_id, user_id, (start_day_of_week, days_to_display)
     """
-    __tablename__ = 'listsettings'
+
+    __tablename__ = "listsettings"
     id = db.Column(db.Integer, primary_key=True)
     start_day_of_week = db.Column(db.Integer, default=-1)
     days_to_display = db.Column(db.Integer, default=7)
 
-    list_id = db.Column(db.Integer, db.ForeignKey(
-        'list.id', ondelete='CASCADE'), nullable=False)
+    list_id = db.Column(
+        db.Integer,
+        db.ForeignKey("list.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     list_ = db.relationship(
-        "List", backref=db.backref('settings', cascade="all", passive_deletes=True))
+        "List",
+        backref=db.backref("settings", cascade="all", passive_deletes=True),
+    )
 
-    user_id = db.Column(db.Integer, db.ForeignKey(
-        'user.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     user = db.relationship(
-        "User", backref=db.backref('listsettings', cascade="all", passive_deletes=True))
+        "User",
+        backref=db.backref(
+            "listsettings", cascade="all", passive_deletes=True
+        ),
+    )
 
     def __repr__(self):
         return "<ListSettings {} of List {} for User {}>".format(
@@ -368,16 +407,21 @@ class Day(db.Model):
 
     Takes list_id and day
     """
-    __tablename__ = 'day'
+
+    __tablename__ = "day"
     id = db.Column(db.Integer, primary_key=True)
     day = db.Column(db.Date, nullable=False)
 
-    __table_args__ = (db.UniqueConstraint('list_id', 'day'),)
+    __table_args__ = (db.UniqueConstraint("list_id", "day"),)
 
-    list_id = db.Column(db.Integer, db.ForeignKey(
-        'list.id', ondelete='CASCADE'), nullable=False)
+    list_id = db.Column(
+        db.Integer,
+        db.ForeignKey("list.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     list_ = db.relationship(
-        "List", backref=db.backref('days', passive_deletes=True))
+        "List", backref=db.backref("days", passive_deletes=True)
+    )
 
     def __repr__(self):
         return "<Day {} of List {}>".format(self.day, self.list_.name)
@@ -387,25 +431,25 @@ class Day(db.Model):
         entries = []
         entry_names = [i for i in meals]
         for i in entry_names:
-            entry = Entry.query.filter_by(
-                day_id=self.id, meal_id=i.id).first()
+            entry = Entry.query.filter_by(day_id=self.id, meal_id=i.id).first()
             if not entry:
-                entry = Entry(day_id=self.id, value='', meal_id=i.id)
+                entry = Entry(day_id=self.id, value="", meal_id=i.id)
                 try:
                     db.session.add(entry)
                     db.session.commit()
                 except IntegrityError:
                     db.session.rollback()
                     entry = Entry.query.filter_by(
-                        day_id=self.id, meal_id=i.id).first()
+                        day_id=self.id, meal_id=i.id
+                    ).first()
             entries.append(entry)
         return entries
 
     def to_dict(self):
         return {
-            'day': self.day.isoformat(),
-            'id': self.id,
-            'entries': [e.id for e in self.get_or_create_entries()]
+            "day": self.day.isoformat(),
+            "id": self.id,
+            "entries": [e.id for e in self.get_or_create_entries()],
         }
 
 
@@ -415,31 +459,34 @@ class Entry(db.Model):
 
     Takes day_id, key (e.g lunch) and value (e.g. spaghetti)
     """
-    __tablename__ = 'entry'
+
+    __tablename__ = "entry"
     id = db.Column(db.Integer, primary_key=True)
-    value = db.Column(db.String(256), nullable=False, default='')
+    value = db.Column(db.String(256), nullable=False, default="")
 
-    __table_args__ = (db.UniqueConstraint('day_id', 'meal_id'),)
+    __table_args__ = (db.UniqueConstraint("day_id", "meal_id"),)
 
-    day_id = db.Column(db.Integer, db.ForeignKey(
-        'day.id', ondelete='CASCADE'), nullable=False)
-    day = db.relationship('Day', backref=db.backref(
-        'entries', passive_deletes=True))
+    day_id = db.Column(
+        db.Integer, db.ForeignKey("day.id", ondelete="CASCADE"), nullable=False
+    )
+    day = db.relationship(
+        "Day", backref=db.backref("entries", passive_deletes=True)
+    )
 
-    meal_id = db.Column(db.Integer, db.ForeignKey(
-        'meals.id', ondelete='CASCADE'))
+    meal_id = db.Column(
+        db.Integer, db.ForeignKey("meals.id", ondelete="CASCADE")
+    )
     meal = db.relationship(
-        "Meal", backref=db.backref('entries', passive_deletes=True))
+        "Meal", backref=db.backref("entries", passive_deletes=True)
+    )
 
     def __repr__(self):
-        return "<Entry {} of Day {} in List {}>".format(self.id, self.day.day, self.day.list_.name)
+        return "<Entry {} of Day {} in List {}>".format(
+            self.id, self.day.day, self.day.list_.name
+        )
 
     def to_dict(self):
-        return {
-            'key': self.meal.name,
-            'id': self.id,
-            'value': self.value
-        }
+        return {"key": self.meal.name, "id": self.id, "value": self.value}
 
 
 class ListPermission(db.Model):
@@ -448,19 +495,30 @@ class ListPermission(db.Model):
 
     Takes in user_id, list_id and permission_level (using owner or member)
     """
-    __tablename__ = 'listpermission'
+
+    __tablename__ = "listpermission"
     id = db.Column(db.Integer, primary_key=True)
     permission_level = db.Column(db.String(256), nullable=False)
 
-    list_id = db.Column(db.Integer, db.ForeignKey(
-        'list.id', ondelete='CASCADE'), nullable=False)
+    list_id = db.Column(
+        db.Integer,
+        db.ForeignKey("list.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     list_ = db.relationship(
-        "List", backref=db.backref('users', cascade="all", passive_deletes=True))
+        "List",
+        backref=db.backref("users", cascade="all", passive_deletes=True),
+    )
 
-    user_id = db.Column(db.Integer, db.ForeignKey(
-        'user.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     user = db.relationship(
-        "User", backref=db.backref('lists', cascade="all", passive_deletes=True))
+        "User",
+        backref=db.backref("lists", cascade="all", passive_deletes=True),
+    )
 
     def __repr__(self):
         return "<ListPermission {} of List {} to User {} at level {}>".format(
@@ -469,7 +527,7 @@ class ListPermission(db.Model):
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'username': self.user.username,
-            'permission_level': self.permission_level
+            "id": self.id,
+            "username": self.user.username,
+            "permission_level": self.permission_level,
         }
